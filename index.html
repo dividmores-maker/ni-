@@ -479,11 +479,10 @@ function goToSlide(n) {
 setInterval(() => goToSlide((currentSlide + 1) % slides.length), 3000);
 </script>
 
-<!-- Firebase Real-time Sync -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-
+<!-- Firebase Real-time Sync (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
 const firebaseConfig = {
   apiKey: "AIzaSyCcO7EpKhHIFme6MlPY2PwV9FxnEEnhzPg",
   authDomain: "ni-angelos.firebaseapp.com",
@@ -493,8 +492,8 @@ const firebaseConfig = {
   appId: "1:336215738941:web:3ea566d8b54e4b98c53854"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 function applyContact(c) {
   if (!c) return;
@@ -549,9 +548,9 @@ function applyCurriculum(cur) {
 }
 
 // Real-time listeners — update instantly when admin saves
-onSnapshot(doc(db, 'siteData', 'contact'),   snap => applyContact(snap.exists()   ? snap.data().value : null));
-onSnapshot(doc(db, 'siteData', 'pages'),     snap => applyPages(snap.exists()     ? snap.data().value : null));
-onSnapshot(doc(db, 'siteData', 'curriculum'),snap => applyCurriculum(snap.exists()? snap.data().value : null));
+db.collection('siteData').doc('contact').onSnapshot(snap => applyContact(snap.exists ? snap.data().value : null));
+db.collection('siteData').doc('pages').onSnapshot(snap => applyPages(snap.exists ? snap.data().value : null));
+db.collection('siteData').doc('curriculum').onSnapshot(snap => applyCurriculum(snap.exists ? snap.data().value : null));
 </script>
 </body>
 </html>
