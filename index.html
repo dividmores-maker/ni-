@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مدرسة ني انجيلوس للشمامسة</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold:#c9a84c; --gold-light:#e8c96a; --gold-dark:#8a6d1f;
+  --deep:#1a1208; --surface:#fdf8ef; --text:#2c1e06;
+  --text-muted:#7a6040; --border:#d4b87a; --accent:#6b3a1a;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:"Cairo",sans-serif;background:var(--surface);color:var(--text);line-height:1.7;}
+
+/* NAV */
+nav{background:var(--deep);padding:0 2rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(0,0,0,.4);}
+.nav-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:64px;}
+.nav-logo{font-family:"Amiri",serif;font-size:1.4rem;color:var(--gold);text-decoration:none;cursor:pointer;}
+.nav-links{display:flex;gap:0;list-style:none;}
+.nav-links a{color:#d4c4a0;text-decoration:none;font-size:.88rem;font-weight:600;padding:0 1rem;height:64px;display:flex;align-items:center;transition:color .2s,background .2s;border-bottom:3px solid transparent;cursor:pointer;}
+.nav-links a:hover,.nav-links a.active{color:var(--gold);border-bottom-color:var(--gold);background:rgba(201,168,76,.06);}
+
+/* HERO */
+.hero{padding:5rem 2rem 4rem;text-align:center;position:relative;overflow:hidden;min-height:340px;}
+.hero-slideshow{position:absolute;inset:0;z-index:0;}
+.hero-slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1s ease-in-out;}
+.hero-slide.active{opacity:1;}
+.hero-slide::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.35);}
+.slideshow-dots{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:2;}
+.slideshow-dots span{width:8px;height:8px;border-radius:50%;background:rgba(201,168,76,.4);cursor:pointer;transition:background .3s;display:block;}
+.slideshow-dots span.active{background:var(--gold);}
+.hero>*:not(.hero-slideshow):not(.slideshow-dots){position:relative;z-index:1;}
+.hero-ornament{font-size:2.5rem;color:var(--gold);opacity:.7;margin-bottom:.5rem;font-family:"Amiri",serif;}
+.hero h1{font-family:"Amiri",serif;font-size:clamp(2rem,5vw,3.2rem);color:var(--gold);margin-bottom:.75rem;}
+.hero p{font-size:1.05rem;color:#c8b48a;max-width:560px;margin:0 auto 2rem;}
+.hero-divider{width:120px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:0 auto;}
+
+/* PAGES */
+.page{display:none;animation:fadeIn .3s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* PAGE HEADER */
+.page-header{background:linear-gradient(160deg,var(--deep) 0%,#2e1a06 60%,#1a0e03 100%);padding:3rem 2rem 2.5rem;text-align:center;}
+.page-header h1{font-family:"Amiri",serif;font-size:clamp(1.6rem,4vw,2.4rem);color:var(--gold);margin-bottom:.5rem;}
+.page-header p{color:#c8b48a;font-size:.95rem;}
+.page-header-divider{width:80px;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:1rem auto 0;}
+
+/* CONTAINER */
+.container{max-width:1100px;margin:0 auto;padding:3rem 2rem;}
+
+/* SECTION TITLE */
+.section-title{font-family:"Amiri",serif;font-size:1.7rem;color:var(--accent);margin-bottom:1.5rem;padding-bottom:.75rem;border-bottom:2px solid var(--border);display:flex;align-items:center;gap:.75rem;}
+.section-title::before{content:"✦";color:var(--gold);font-size:1rem;}
+
+/* CARDS */
+.info-card,.content-box{background:white;border:1px solid var(--border);border-radius:12px;padding:2rem;margin-bottom:2rem;box-shadow:0 2px 16px rgba(139,99,40,.08);}
+.info-card h3,.content-box h3{font-family:"Amiri",serif;font-size:1.2rem;color:var(--accent);margin-bottom:1rem;}
+.content-box h3{padding-bottom:.5rem;border-bottom:1px solid var(--border);}
+.content-box p{color:var(--text);font-size:.95rem;margin-bottom:.75rem;line-height:1.8;}
+.info-list{list-style:none;display:flex;flex-direction:column;gap:.6rem;}
+.info-list li{padding-right:1.4rem;position:relative;color:var(--text);font-size:.95rem;}
+.info-list li::before{content:"◆";position:absolute;right:0;top:2px;color:var(--gold);font-size:.6rem;}
+.info-note{margin-top:1rem;padding:.75rem 1rem;background:#fdf3e0;border-right:3px solid var(--gold);border-radius:0 8px 8px 0;font-size:.9rem;color:var(--text-muted);}
+
+/* BUTTONS */
+.btn-link,.back-btn{display:inline-flex;align-items:center;gap:.4rem;cursor:pointer;text-decoration:none;}
+.btn-link{margin-top:1rem;background:var(--deep);color:var(--gold);padding:.6rem 1.4rem;border-radius:6px;font-size:.9rem;font-weight:600;transition:background .2s,transform .15s;border:none;}
+.btn-link:hover{background:#2e1a06;transform:translateY(-1px);}
+.back-btn{margin-bottom:1.5rem;color:var(--text-muted);font-size:.88rem;font-weight:600;transition:color .2s;background:none;border:none;padding:0;}
+.back-btn:hover{color:var(--accent);}
+
+/* LINKS GRID */
+.links-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:2.5rem;}
+.link-card{background:white;border:1px solid var(--border);border-radius:10px;padding:1.2rem 1.4rem;text-decoration:none;color:var(--text);display:flex;align-items:center;gap:.75rem;transition:box-shadow .2s,transform .15s,border-color .2s;font-size:.92rem;font-weight:600;cursor:pointer;}
+.link-card:hover{box-shadow:0 4px 20px rgba(139,99,40,.15);transform:translateY(-2px);border-color:var(--gold);color:var(--accent);}
+.link-icon{width:36px;height:36px;background:#fdf3e0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--gold-dark);font-size:1.1rem;flex-shrink:0;}
+
+/* CURRICULUM */
+.levels-wrapper{display:flex;flex-direction:column;gap:1.5rem;}
+.level-block{background:white;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(139,99,40,.06);}
+.level-header{background:var(--deep);color:var(--gold);padding:1rem 1.5rem;font-family:"Amiri",serif;font-size:1.2rem;display:flex;align-items:center;gap:.6rem;cursor:pointer;user-select:none;transition:background .2s;}
+.level-header:hover{background:#2e1a06;}
+.level-header .toggle-icon{margin-right:auto;transition:transform .3s;font-size:.8rem;opacity:.7;}
+.level-header.open .toggle-icon{transform:rotate(180deg);}
+.level-body{display:none;padding:1.25rem 1.5rem;}
+.level-body.open{display:block;}
+.year-block{margin-bottom:1.25rem;}
+.year-block:last-child{margin-bottom:0;}
+.year-title{font-size:.9rem;font-weight:700;color:var(--text-muted);margin-bottom:.6rem;}
+.subjects-row{display:flex;flex-wrap:wrap;gap:.5rem;}
+.subject-btn{display:inline-flex;align-items:center;gap:.35rem;background:#fdf3e0;border:1px solid #e5c97a;color:var(--accent);padding:.4rem .9rem;border-radius:20px;font-size:.85rem;font-weight:600;text-decoration:none;transition:background .2s,border-color .2s,transform .15s;cursor:pointer;}
+.subject-btn:hover{background:var(--gold);border-color:var(--gold-dark);color:var(--deep);transform:translateY(-1px);}
+
+/* EXAMS */
+.exams-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:2.5rem;}
+.exam-card{background:white;border:1px solid var(--border);border-radius:10px;padding:1.2rem;text-align:center;}
+.exam-card h4{font-family:"Amiri",serif;color:var(--accent);margin-bottom:.75rem;font-size:1rem;}
+.exam-card .exam-links{display:flex;flex-direction:column;gap:.4rem;}
+.exam-link{display:block;text-align:center;background:#fdf3e0;border:1px solid #e5c97a;border-radius:6px;padding:.35rem .7rem;font-size:.83rem;color:var(--accent);text-decoration:none;font-weight:600;transition:background .2s;cursor:pointer;}
+.exam-link:hover{background:var(--gold);color:var(--deep);}
+
+/* FEAST */
+.feast-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.75rem;margin-bottom:2.5rem;}
+.feast-item{display:flex;align-items:center;gap:.75rem;background:white;border:1px solid var(--border);border-radius:8px;padding:.9rem 1.1rem;text-decoration:none;color:var(--text);font-size:.9rem;font-weight:600;transition:border-color .2s,background .2s;cursor:pointer;}
+.feast-item:hover{border-color:var(--gold);background:#fdf9f0;color:var(--accent);}
+.feast-item span{color:var(--gold);font-size:1.1rem;}
+
+/* CONTACT */
+.contact-section{background:var(--deep);border-radius:16px;padding:2.5rem;margin-bottom:2rem;}
+.contact-section .section-title{color:var(--gold);border-color:rgba(201,168,76,.3);}
+.contact-section .section-title::before{color:var(--gold-light);}
+.contact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:1.5rem;}
+.contact-item{display:flex;align-items:center;gap:.75rem;color:#c8b48a;text-decoration:none;font-size:.9rem;padding:.75rem 1rem;background:rgba(255,255,255,.05);border:1px solid rgba(201,168,76,.2);border-radius:8px;transition:border-color .2s,background .2s;}
+.contact-item:hover{border-color:var(--gold);background:rgba(201,168,76,.08);color:var(--gold);}
+.contact-icon{font-size:1.2rem;}
+
+/* SUBJECT PAGE */
+.subject-hero{background:var(--deep);border-radius:12px;padding:2rem;text-align:center;margin-bottom:2rem;}
+.subject-hero .emoji{font-size:3rem;margin-bottom:.5rem;}
+.subject-hero h2{font-family:"Amiri",serif;color:var(--gold);font-size:1.8rem;}
+.subject-hero p{color:#c8b48a;font-size:.9rem;margin-top:.4rem;}
+.coming-soon{text-align:center;padding:3rem 1rem;color:var(--text-muted);}
+.file-item{display:flex;align-items:center;gap:1rem;background:#fdf9f0;border:1px solid var(--border);border-radius:8px;padding:1rem 1.2rem;text-decoration:none;color:var(--text);margin-bottom:.6rem;transition:border-color .2s,background .2s,transform .15s;}
+.file-item:hover{border-color:var(--gold);background:#fdf3e0;color:var(--accent);transform:translateX(-3px);}
+.file-item .file-icon{width:38px;height:38px;background:var(--deep);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:1.1rem;flex-shrink:0;}
+.coming-soon .cs-icon{font-size:3rem;margin-bottom:1rem;opacity:.5;}
+
+/* FOOTER */
+footer{text-align:center;padding:1.5rem;background:var(--deep);color:#6a5530;font-size:.82rem;border-top:1px solid rgba(201,168,76,.15);}
+
+@media(max-width:600px){
+  .nav-links{display:none;}
+  .hero{padding:3rem 1.5rem 2.5rem;}
+  .container{padding:2rem 1rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a class="nav-logo" onclick="showPage('home')">✝ ني انجيلوس</a>
+    <ul class="nav-links">
+      <li><a onclick="showPage('home')" id="nav-home">الصفحة الرئيسية</a></li>
+      <li><a onclick="showPage('about')" id="nav-about">عن كنيستنا</a></li>
+      <li><a onclick="showPage('contact')" id="nav-contact">التواصل</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ══════════════ HOME PAGE ══════════════ -->
+<div id="page-home" class="page active">
+  <div class="hero">
+    <div class="hero-slideshow">
+      <div class="hero-slide active" style="background-image:url('image1.jpg');"></div>
+      <div class="hero-slide" style="background-image:url('image2.jpg');"></div>
+      <div class="hero-slide" style="background-image:url('image3.jpg');"></div>
+      <div class="hero-slide" style="background-image:url('image4.jpg');"></div>
+      <div class="hero-slide" style="background-image:url('image5.jpg');"></div>
+    </div>
+    <div class="slideshow-dots">
+      <span class="active" onclick="goToSlide(0)"></span>
+      <span onclick="goToSlide(1)"></span>
+      <span onclick="goToSlide(2)"></span>
+      <span onclick="goToSlide(3)"></span>
+      <span onclick="goToSlide(4)"></span>
+    </div>
+    <div class="hero-ornament">☩</div>
+    <h1>مدرسة ني انجيلوس للشمامسة</h1>
+    <p>مدرسة متخصصة في تعليم الألحان والطقوس والليتورجيا القبطية لخدمة الهيكل المقدس</p>
+    <div class="hero-divider"></div>
+  </div>
+
+  <div class="container">
+    <!-- نظام الدراسة -->
+    <h2 class="section-title">نظام الدراسة</h2>
+    <div class="info-card">
+      <h3>معلومات عامة</h3>
+      <ul class="info-list">
+        <li>تبدأ المدرسة الدراسة في منتصف شهر سبتمبر</li>
+        <li>تشمل المدرسة ثلاثة مستويات: (تمهيدي، مستوى أول، مستوى ثاني)</li>
+        <li>السنة الدراسية مقسمة إلى ثلاثة ترمات وفي نهاية كل ترم اختبارات لما تم دراسته</li>
+      </ul>
+      <div class="info-note">ملحوظة هامة: أوقات الاختبارات لن تتعارض مع الامتحانات المدرسية — فهي تتم في أوقات إجازات الدارسين.</div>
+      <button class="btn-link" onclick="showPage('study')">📄 معرفة المزيد عن نظام الدراسة</button>
+    </div>
+
+    <!-- لينكات الرسامة -->
+    <h2 class="section-title">لينكات هامة لمن يريد الرسامة</h2>
+    <div class="links-grid">
+      <div class="link-card" onclick="showSubject('📖','نعمة الابصالتس','لينكات الرسامة','home')">
+        <div class="link-icon">📖</div>نعمة الابصالتس
+      </div>
+      <div class="link-card" onclick="showSubject('📋','نقاط هامة عن الرسامة','لينكات الرسامة','home')">
+        <div class="link-icon">📋</div>نقاط هامة عن الرسامة
+      </div>
+      <div class="link-card" onclick="showSubject('📄','ورقة بداية العام','لينكات الرسامة','home')">
+        <div class="link-icon">📄</div>ورقة بداية العام
+      </div>
+      <div class="link-card" onclick="showSubject('🎵','لقاء الخدمة الشماسية','لينكات الرسامة','home')">
+        <div class="link-icon">🎵</div>لقاء الخدمة الشماسية
+      </div>
+    </div>
+
+    <!-- المناهج -->
+    <h2 class="section-title">مناهج مدرسة ني انجيلوس للشمامسة</h2>
+    <div class="levels-wrapper" id="levels-wrapper-dynamic">
+    </div><!-- /levels-wrapper -->
+
+    <!-- نماذج الامتحانات -->
+    <h2 class="section-title" style="margin-top:3rem;">نماذج الامتحانات</h2>
+    <div class="exams-grid">
+      <div class="exam-card"><h4>المستوى الأول</h4><div class="exam-links">
+        <span class="exam-link" onclick="showExam('المستوى الأول','السنة الأولى')">السنة الأولى</span>
+        <span class="exam-link" onclick="showExam('المستوى الأول','السنة الثانية')">السنة الثانية</span>
+        <span class="exam-link" onclick="showExam('المستوى الأول','السنة الثالثة')">السنة الثالثة</span>
+      </div></div>
+      <div class="exam-card"><h4>المستوى الثاني</h4><div class="exam-links">
+        <span class="exam-link" onclick="showExam('المستوى الثاني','السنة الأولى')">السنة الأولى</span>
+        <span class="exam-link" onclick="showExam('المستوى الثاني','السنة الثانية')">السنة الثانية</span>
+        <span class="exam-link" onclick="showExam('المستوى الثاني','السنة الثالثة')">السنة الثالثة</span>
+      </div></div>
+      <div class="exam-card"><h4>المستوى الثالث</h4><div class="exam-links">
+        <span class="exam-link" onclick="showExam('المستوى الثالث','السنة الأولى')">السنة الأولى</span>
+      </div></div>
+    </div>
+
+    <!-- كتب الأعياد -->
+    <h2 class="section-title">كتب ألحان الأعياد</h2>
+    <div class="feast-list">
+      <span class="feast-item" onclick="showFeast('ألحان عيد الميلاد المجيد')"><span>✦</span> ألحان عيد الميلاد المجيد</span>
+      <span class="feast-item" onclick="showFeast('برمون وقداس عيد الغطاس')"><span>✦</span> برمون وقداس عيد الغطاس</span>
+      <span class="feast-item" onclick="showFeast('ألحان أحد الشعانين')"><span>✦</span> ألحان أحد الشعانين</span>
+      <span class="feast-item" onclick="showFeast('ألحان عيد القيامة المجيد')"><span>✦</span> ألحان عيد القيامة المجيد</span>
+    </div>
+
+    <!-- التواصل -->
+    <div class="contact-section">
+      <h2 class="section-title">تواصل معنا</h2>
+      <div class="contact-grid">
+        <a href="https://facebook.com" target="_blank" class="contact-item fb-link"><span class="contact-icon">📘</span> فيسبوك المدرسة</a>
+        <a href="https://youtube.com" target="_blank" class="contact-item yt-link"><span class="contact-icon">▶️</span> قناة يوتيوب</a>
+        <a href="tel:+201200000000" class="contact-item phone-link"><span class="contact-icon">📞</span> <span class="contact-label">+201200000000</span></a>
+        <a href="https://maps.google.com" target="_blank" class="contact-item map-link"><span class="contact-icon">📍</span> خريطة الموقع</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ABOUT PAGE ══════════════ -->
+<div id="page-about" class="page">
+  <div class="page-header">
+    <h1>عن كنيسة ني انجيلوس</h1>
+    <p>تعرف على كنيستنا وتاريخها وخدماتها</p>
+    <div class="page-header-divider"></div>
+  </div>
+  <div class="container">
+    <button class="back-btn" onclick="showPage('home')">← الصفحة الرئيسية</button>
+    <div class="content-box">
+      <h3>✝ نبذة عن الكنيسة</h3>
+      <p id="about-text-display">كنيسة ني انجيلوس هي كنيسة قبطية أرثوذكسية تقوم على خدمة الهيكل المقدس وتعليم الشمامسة الألحان القبطية والطقوس الكنسية.</p>
+    </div>
+    <div class="content-box">
+      <h3>🎯 رسالتنا</h3>
+      <p id="mission-text-display">تعليم الشمامسة وخدام الهيكل الألحان الكنسية الأصيلة والطقوس القبطية المتوارثة عبر الأجيال.</p>
+    </div>
+    <div class="content-box">
+      <h3>📍 الموقع وأوقات الخدمة</h3>
+      <p>للاستفسار عن موقع الكنيسة وأوقات القداسات والخدمات، يرجى التواصل معنا.</p>
+      <button class="btn-link" onclick="showPage('contact')">📞 تواصل معنا</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ CONTACT PAGE ══════════════ -->
+<div id="page-contact" class="page">
+  <div class="page-header">
+    <h1>تواصل معنا</h1>
+    <p>نسعد بتواصلكم معنا في أي وقت</p>
+    <div class="page-header-divider"></div>
+  </div>
+  <div class="container">
+    <button class="back-btn" onclick="showPage('home')">← الصفحة الرئيسية</button>
+    <div class="contact-section">
+      <h2 class="section-title">وسائل التواصل</h2>
+      <div class="contact-grid">
+        <a href="https://facebook.com" target="_blank" class="contact-item fb-link"><span class="contact-icon">📘</span> فيسبوك المدرسة</a>
+        <a href="https://youtube.com" target="_blank" class="contact-item yt-link"><span class="contact-icon">▶️</span> قناة يوتيوب</a>
+        <a href="tel:+201200000000" class="contact-item phone-link"><span class="contact-icon">📞</span> <span class="contact-label">+201200000000</span></a>
+        <a href="https://maps.google.com" target="_blank" class="contact-item map-link"><span class="contact-icon">📍</span> خريطة الموقع</a>
+      </div>
+    </div>
+    <div class="content-box">
+      <h3>⏰ أوقات التواصل</h3>
+      <p class="contact-hours-text">من السبت إلى الخميس</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ STUDY PAGE ══════════════ -->
+<div id="page-study" class="page">
+  <div class="page-header">
+    <h1>نظام الدراسة</h1>
+    <p>تعرف على نظام الدراسة والمستويات المختلفة</p>
+    <div class="page-header-divider"></div>
+  </div>
+  <div class="container">
+    <button class="back-btn" onclick="showPage('home')">← الصفحة الرئيسية</button>
+    <div class="content-box">
+      <h3>📅 بداية العام الدراسي</h3>
+      <p id="study-start-display">تبدأ المدرسة الدراسة في منتصف شهر سبتمبر من كل عام.</p>
+    </div>
+    <div class="content-box">
+      <h3>📝 نظام الاختبارات</h3>
+      <p>السنة الدراسية مقسمة إلى ثلاثة ترمات، وفي نهاية كل ترم تُعقد اختبارات لما تم دراسته.</p>
+      <div class="info-note" id="study-note-display">أوقات الاختبارات لن تتعارض مع الامتحانات المدرسية.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ DYNAMIC PAGE (subject/exam/feast) ══════════════ -->
+<div id="page-dynamic" class="page">
+  <div class="page-header">
+    <h1 id="dyn-title">—</h1>
+    <p id="dyn-sub">—</p>
+    <div class="page-header-divider"></div>
+  </div>
+  <div class="container">
+    <button class="back-btn" id="dyn-back" onclick="goBack()">← رجوع</button>
+    <div class="subject-hero">
+      <div class="emoji" id="dyn-emoji">📄</div>
+      <h2 id="dyn-heading">—</h2>
+      <p id="dyn-label">—</p>
+    </div>
+    <div class="content-box">
+      <h3>📁 الملفات والموضوعات</h3>
+      <div id="dyn-files">
+        <div class="coming-soon"><div class="cs-icon">📂</div><p>سيتم إضافة الملفات قريباً — تابعونا</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>© 2025 مدرسة ني انجيلوس للشمامسة — جميع الحقوق محفوظة</footer>
+
+<script>
+// ── Load data from Admin localStorage ───────────────────
+const DEFAULTS = {
+  contact: { fb:'https://facebook.com', yt:'https://youtube.com', phone:'+201200000000', map:'https://maps.google.com', hours:'من السبت إلى الخميس' },
+  curriculum: [
+    { name:'المستوى التمهيدي', years:[
+      { name:'السنة الأولى', subjects:['📖 الأجبية المقدسة','🎵 الألحان','⛪ الطقس','🔤 قبطي','💿 سي دي'] },
+      { name:'السنة الثانية', subjects:['📖 الأجبية المقدسة','🎵 الألحان','⛪ الطقس','🔤 قبطي','💿 سي دي'] }
+    ]},
+    { name:'المستوى الأول', years:[
+      { name:'السنة الأولى', subjects:['📖 الأجبية المقدسة','🎵 الألحان','⛪ الطقس','🔤 قبطي','💿 سي دي'] },
+      { name:'السنة الثانية', subjects:['📖 الأجبية المقدسة','🎵 الألحان','⛪ الطقس','🔤 قبطي','💿 سي دي'] },
+      { name:'السنة الثالثة', subjects:['📖 الأجبية المقدسة','🎵 الألحان','⛪ الطقس','🔤 قبطي','💿 سي دي'] }
+    ]},
+    { name:'المستوى الثاني', years:[
+      { name:'السنة الأولى', subjects:['📖 الأجبية المقدسة','🎵 الألحان','⛪ الطقس','🔤 قبطي','💿 سي دي'] },
+      { name:'السنة الثانية', subjects:['📖 الأجبية المقدسة','🎵 الألحان','⛪ الطقس','🔤 قبطي','💿 سي دي'] },
+      { name:'السنة الثالثة', subjects:['📖 الأجبية المقدسة','🎵 الألحان','⛪ الطقس','🔤 قبطي','💿 سي دي'] }
+    ]}
+  ],
+  pages: {
+    about:'كنيسة ني انجيلوس هي كنيسة قبطية أرثوذكسية تقوم على خدمة الهيكل المقدس وتعليم الشمامسة الألحان القبطية والطقوس الكنسية.',
+    mission:'تعليم الشمامسة وخدام الهيكل الألحان الكنسية الأصيلة والطقوس القبطية المتوارثة عبر الأجيال.',
+    studyStart:'منتصف شهر سبتمبر',
+    studyNote:'أوقات الاختبارات لن تتعارض مع الامتحانات المدرسية — فهي تتم في أوقات إجازات الدارسين.'
+  }
+};
+
+function getData(key) {
+  try { return JSON.parse(localStorage.getItem('ni_' + key)) || DEFAULTS[key]; }
+  catch { return DEFAULTS[key]; }
+}
+
+function applyAdminData() {
+  // Contact
+  const c = getData('contact');
+  document.querySelectorAll('.fb-link').forEach(el => { el.href = c.fb; });
+  document.querySelectorAll('.yt-link').forEach(el => { el.href = c.yt; });
+  document.querySelectorAll('.phone-link').forEach(el => { el.href = 'tel:' + c.phone; el.querySelector('.contact-label') && (el.querySelector('.contact-label').textContent = c.phone); });
+  document.querySelectorAll('.map-link').forEach(el => { el.href = c.map; });
+  document.querySelectorAll('.contact-hours-text').forEach(el => { el.textContent = c.hours; });
+
+  // Pages
+  const p = getData('pages');
+  const aboutEl = document.getElementById('about-text-display');
+  if (aboutEl) aboutEl.textContent = p.about;
+  const missionEl = document.getElementById('mission-text-display');
+  if (missionEl) missionEl.textContent = p.mission;
+  const studyStartEl = document.getElementById('study-start-display');
+  if (studyStartEl) studyStartEl.textContent = 'تبدأ المدرسة الدراسة في ' + p.studyStart + ' من كل عام.';
+  const studyNoteEl = document.getElementById('study-note-display');
+  if (studyNoteEl) studyNoteEl.textContent = p.studyNote;
+
+  // Curriculum
+  const cur = getData('curriculum');
+  const wrapper = document.getElementById('levels-wrapper-dynamic');
+  if (!wrapper) return;
+  wrapper.innerHTML = cur.map(lvl => `
+    <div class="level-block">
+      <div class="level-header" onclick="toggleLevel(this)">
+        ✦ ${lvl.name}<span class="toggle-icon">▼</span>
+      </div>
+      <div class="level-body">
+        ${lvl.years.map(yr => `
+          <div class="year-block">
+            <div class="year-title">${yr.name}</div>
+            <div class="subjects-row">
+              ${yr.subjects.map(s => {
+                const parts = s.split(' '); const emoji = parts[0]; const name = parts.slice(1).join(' ');
+                return `<span class="subject-btn" onclick="showSubject('${emoji}','${name}','${lvl.name} — ${yr.name}','home',${cur.indexOf(lvl)},${lvl.years.indexOf(yr)},${yr.subjects.indexOf(s)})">${s}</span>`;
+              }).join('')}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+window.addEventListener('storage', applyAdminData);
+
+// ── Navigation ──────────────────────────────────────────
+let prevPage = 'home';
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + id);
+  if (navEl) navEl.classList.add('active');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function goBack() {
+  showPage(prevPage);
+}
+
+function showSubject(emoji, name, label, from, li, yi, si) {
+  prevPage = from;
+  document.getElementById('dyn-emoji').textContent = emoji;
+  document.getElementById('dyn-title').textContent = name;
+  document.getElementById('dyn-heading').textContent = name;
+  document.getElementById('dyn-sub').textContent = label;
+  document.getElementById('dyn-label').textContent = label;
+  const filesBox = document.getElementById('dyn-files');
+  let topicsHTML = '';
+  if (li !== undefined) {
+    const cur = getData('curriculum');
+    const yr = ((cur[li] || {}).years || [])[yi] || {};
+    const topics = (yr.topics || {})[si] || [];
+    if (topics.length > 0) {
+      topicsHTML = topics.map(t => {
+        const isYT = t.url.includes('youtube') || t.url.includes('youtu.be');
+        const isPDF = t.url.toLowerCase().includes('.pdf');
+        const icon = isYT ? '▶️' : isPDF ? '📄' : '🔗';
+        const badge = isYT ? 'يوتيوب' : isPDF ? 'PDF' : 'رابط';
+        return '<a href="'+t.url+'" target="_blank" class="file-item"><div class="file-icon">'+icon+'</div><div><div style="font-weight:700">'+t.title+'</div><div style="font-size:.75rem;color:var(--text-muted);margin-top:.1rem;">'+badge+'</div></div></a>';
+      }).join('');
+    }
+  }
+  filesBox.innerHTML = topicsHTML || '<div class="coming-soon"><div class="cs-icon">📂</div><p>سيتم إضافة الملفات قريباً — تابعونا</p></div>';
+  showPage('dynamic');
+}
+
+function showExam(level, year) {
+  showSubject('📝', 'نموذج امتحان', level + ' — ' + year, 'home');
+  document.getElementById('dyn-title').textContent = 'نموذج امتحان ' + level;
+}
+
+function showFeast(name) {
+  showSubject('🕊️', name, 'كتب ألحان الأعياد', 'home');
+}
+
+// ── Level toggle ─────────────────────────────────────────
+function toggleLevel(header) {
+  header.classList.toggle('open');
+  header.nextElementSibling.classList.toggle('open');
+}
+
+// ── Slideshow ─────────────────────────────────────────────
+let currentSlide = 0;
+const slides = document.querySelectorAll('.hero-slide');
+const dots = document.querySelectorAll('.slideshow-dots span');
+
+function goToSlide(n) {
+  slides[currentSlide].classList.remove('active');
+  dots[currentSlide].classList.remove('active');
+  currentSlide = n;
+  slides[currentSlide].classList.add('active');
+  dots[currentSlide].classList.add('active');
+}
+setInterval(() => goToSlide((currentSlide + 1) % slides.length), 3000);
+
+// ── Init ─────────────────────────────────────────────────
+applyAdminData();
+</script>
+</body>
+</html>
