@@ -377,9 +377,10 @@ async function loadContact() {
   document.getElementById('phone-num').value = d.phone;
   document.getElementById('map-url').value = d.map;
   document.getElementById('contact-hours').value = d.hours;
+  dataLoaded.contact = true;
 }
 
-async function saveContact() {
+async function saveContact() { if (!dataLoaded.contact) { toast("⏳ البيانات لسه بتتحمل، استنى ثانية"); return; }
   await setData('contact', {
     fb: document.getElementById('fb-url').value,
     yt: document.getElementById('yt-url').value,
@@ -395,6 +396,7 @@ let curriculum = [];
 
 async function loadCurriculum() {
   curriculum = await getData('curriculum');
+  dataLoaded.curriculum = true;
   renderCurriculum();
 }
 
@@ -601,7 +603,7 @@ function addLevel() {
   renderCurriculum();
 }
 
-async function saveCurriculum() {
+async function saveCurriculum() { if (!dataLoaded.curriculum) { toast("⏳ البيانات لسه بتتحمل، استنى ثانية"); return; }
   await setData('curriculum', curriculum);
   toast('✅ تم حفظ المناهج!');
 }
@@ -613,9 +615,10 @@ async function loadPages() {
   document.getElementById('mission-text').value = d.mission;
   document.getElementById('study-start').value = d.studyStart;
   document.getElementById('study-note').value = d.studyNote;
+  dataLoaded.pages = true;
 }
 
-async function savePages() {
+async function savePages() { if (!dataLoaded.pages) { toast("⏳ البيانات لسه بتتحمل، استنى ثانية"); return; }
   await setData('pages', {
     about: document.getElementById('about-text').value,
     mission: document.getElementById('mission-text').value,
