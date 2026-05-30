@@ -186,11 +186,11 @@ footer{text-align:center;padding:1.5rem;background:var(--deep);color:#6a5530;fon
     <div class="info-card">
       <h3>معلومات عامة</h3>
       <ul class="info-list">
-        <li>تبدأ المدرسة الدراسة في منتصف شهر سبتمبر</li>
+        <li id="home-study-start-display">تبدأ المدرسة الدراسة في منتصف شهر سبتمبر</li>
         <li>تشمل المدرسة ثلاثة مستويات: (تمهيدي، مستوى أول، مستوى ثاني)</li>
         <li>السنة الدراسية مقسمة إلى ثلاثة ترمات وفي نهاية كل ترم اختبارات لما تم دراسته</li>
       </ul>
-      <div class="info-note">ملحوظة هامة: أوقات الاختبارات لن تتعارض مع الامتحانات المدرسية — فهي تتم في أوقات إجازات الدارسين.</div>
+      <div class="info-note" id="home-study-note-display">ملحوظة هامة: أوقات الاختبارات لن تتعارض مع الامتحانات المدرسية — فهي تتم في أوقات إجازات الدارسين.</div>
       <button class="btn-link" onclick="showPage('study')">📄 معرفة المزيد عن نظام الدراسة</button>
     </div>
 
@@ -518,10 +518,16 @@ function applyPages(p) {
   if (aboutEl) aboutEl.textContent = p.about;
   const missionEl = document.getElementById('mission-text-display');
   if (missionEl) missionEl.textContent = p.mission;
+  // صفحة نظام الدراسة
   const studyStartEl = document.getElementById('study-start-display');
   if (studyStartEl) studyStartEl.textContent = 'تبدأ المدرسة الدراسة في ' + p.studyStart + ' من كل عام.';
   const studyNoteEl = document.getElementById('study-note-display');
   if (studyNoteEl) studyNoteEl.textContent = p.studyNote;
+  // الصفحة الرئيسية
+  const homeStartEl = document.getElementById('home-study-start-display');
+  if (homeStartEl) homeStartEl.textContent = 'تبدأ المدرسة الدراسة في ' + p.studyStart;
+  const homeNoteEl = document.getElementById('home-study-note-display');
+  if (homeNoteEl) homeNoteEl.textContent = 'ملحوظة هامة: ' + p.studyNote;
 }
 
 function applyCurriculum(cur) {
