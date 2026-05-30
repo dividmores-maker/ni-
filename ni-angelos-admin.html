@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة الأدمن — مدرسة ني انجيلوس</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold:#c9a84c; --gold-light:#e8c96a;
+  --deep:#1a1208; --surface:#f5f5f5; --text:#1a1a1a;
+  --text-muted:#666; --border:#ddd; --accent:#6b3a1a;
+  --danger:#c0392b; --success:#27ae60; --info:#2980b9;
+  --card:#fff;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:"Cairo",sans-serif;background:var(--surface);color:var(--text);line-height:1.6;}
+
+/* LOGIN */
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--deep);}
+.login-box{background:white;border-radius:16px;padding:2.5rem;width:340px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.4);}
+.login-box .logo{font-family:"Amiri",serif;font-size:1.8rem;color:var(--gold);margin-bottom:.25rem;}
+.login-box p{color:var(--text-muted);font-size:.85rem;margin-bottom:1.5rem;}
+.login-box input{width:100%;padding:.75rem 1rem;border:1.5px solid var(--border);border-radius:8px;font-family:"Cairo",sans-serif;font-size:.95rem;margin-bottom:.75rem;outline:none;transition:border-color .2s;}
+.login-box input:focus{border-color:var(--gold);}
+.login-box button{width:100%;padding:.8rem;background:var(--deep);color:var(--gold);border:none;border-radius:8px;font-family:"Cairo",sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:background .2s;}
+.login-box button:hover{background:#2e1a06;}
+.login-error{color:var(--danger);font-size:.85rem;margin-top:.5rem;display:none;}
+
+/* ADMIN LAYOUT */
+#admin-screen{display:none;}
+.admin-nav{background:var(--deep);padding:0 2rem;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.3);}
+.admin-nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px;}
+.admin-logo{font-family:"Amiri",serif;color:var(--gold);font-size:1.3rem;}
+.admin-logo span{color:#888;font-size:.8rem;font-family:"Cairo",sans-serif;margin-right:.5rem;}
+.btn-logout{background:rgba(255,255,255,.08);color:#c8b48a;border:1px solid rgba(201,168,76,.3);padding:.4rem 1rem;border-radius:6px;cursor:pointer;font-family:"Cairo",sans-serif;font-size:.85rem;transition:background .2s;}
+.btn-logout:hover{background:rgba(255,255,255,.15);}
+
+.admin-body{max-width:1200px;margin:0 auto;padding:2rem;}
+
+/* TABS */
+.tabs{display:flex;gap:.5rem;margin-bottom:2rem;flex-wrap:wrap;}
+.tab{padding:.6rem 1.4rem;border-radius:8px;border:1.5px solid var(--border);background:white;cursor:pointer;font-family:"Cairo",sans-serif;font-size:.9rem;font-weight:600;color:var(--text-muted);transition:all .2s;}
+.tab.active{background:var(--deep);color:var(--gold);border-color:var(--deep);}
+.tab:hover:not(.active){border-color:var(--gold);color:var(--accent);}
+
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* SECTION */
+.admin-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.75rem;margin-bottom:1.5rem;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.admin-card h3{font-size:1.05rem;color:var(--accent);margin-bottom:1.25rem;padding-bottom:.6rem;border-bottom:2px solid #f0e8d8;display:flex;align-items:center;gap:.5rem;}
+
+/* FORM */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+.form-row.single{grid-template-columns:1fr;}
+.field label{display:block;font-size:.82rem;font-weight:700;color:var(--text-muted);margin-bottom:.35rem;}
+.field input,.field textarea,.field select{width:100%;padding:.65rem .9rem;border:1.5px solid var(--border);border-radius:8px;font-family:"Cairo",sans-serif;font-size:.9rem;outline:none;transition:border-color .2s;background:white;}
+.field input:focus,.field textarea:focus{border-color:var(--gold);}
+.field textarea{resize:vertical;min-height:90px;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.6rem 1.3rem;border-radius:7px;font-family:"Cairo",sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;border:none;transition:all .2s;}
+.btn-save{background:var(--deep);color:var(--gold);}
+.btn-save:hover{background:#2e1a06;transform:translateY(-1px);}
+.btn-danger{background:var(--danger);color:white;}
+.btn-danger:hover{background:#a93226;}
+.btn-add{background:var(--success);color:white;}
+.btn-add:hover{background:#219a52;}
+.btn-sm{padding:.4rem .9rem;font-size:.82rem;}
+
+/* TOAST */
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(100px);background:#1a1208;color:var(--gold);padding:.75rem 1.75rem;border-radius:30px;font-size:.9rem;font-weight:600;z-index:999;opacity:0;transition:all .35s;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.3);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* CURRICULUM EDITOR */
+.level-editor{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1rem;}
+.level-editor-header{background:#fdf3e0;padding:.9rem 1.2rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.level-editor-header h4{color:var(--accent);font-size:.95rem;}
+.level-editor-body{padding:1.2rem;display:none;}
+.level-editor-body.open{display:block;}
+.year-editor{background:#fafafa;border:1px solid #eee;border-radius:8px;padding:1rem;margin-bottom:.75rem;}
+.year-editor-title{font-weight:700;font-size:.85rem;color:var(--text-muted);margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between;}
+.subjects-editor{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.5rem;}
+.subj-tag{display:inline-flex;align-items:center;gap:.3rem;background:#fdf3e0;border:1px solid #e5c97a;color:var(--accent);padding:.3rem .7rem;border-radius:20px;font-size:.82rem;font-weight:600;}
+.subj-tag .remove-subj{cursor:pointer;color:var(--danger);font-size:.9rem;line-height:1;}
+.add-subj-row{display:flex;gap:.5rem;margin-top:.5rem;}
+.add-subj-row input{flex:1;padding:.4rem .7rem;border:1.5px solid var(--border);border-radius:6px;font-family:"Cairo",sans-serif;font-size:.85rem;outline:none;}
+.add-subj-row input:focus{border-color:var(--gold);}
+
+/* TOPIC EDITOR */
+.subj-tag{cursor:pointer;transition:background .2s;}
+.subj-tag:hover{background:#ffe9b0;}
+.topic-panel{display:none;margin-top:.75rem;background:#fff;border:1.5px solid var(--gold);border-radius:10px;padding:1rem;}
+.topic-panel.open{display:block;}
+.topic-panel h5{font-size:.85rem;color:var(--accent);margin-bottom:.75rem;font-weight:700;}
+.topic-list{display:flex;flex-direction:column;gap:.5rem;margin-bottom:.75rem;}
+.topic-row{display:grid;grid-template-columns:1fr 1.5fr auto;gap:.5rem;align-items:center;background:#fafafa;border:1px solid #eee;border-radius:7px;padding:.5rem .7rem;}
+.topic-row span{font-size:.85rem;color:var(--text);}
+.topic-row a{font-size:.75rem;color:var(--info);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.topic-row a:hover{text-decoration:underline;}
+.add-topic-row{display:grid;grid-template-columns:1fr 1.5fr auto;gap:.5rem;align-items:center;}
+.add-topic-row input{padding:.4rem .7rem;border:1.5px solid var(--border);border-radius:6px;font-family:"Cairo",sans-serif;font-size:.82rem;outline:none;}
+.add-topic-row input:focus{border-color:var(--gold);}
+.topic-type-badge{font-size:.7rem;padding:.15rem .5rem;border-radius:10px;font-weight:700;}
+.badge-pdf{background:#fde8e8;color:#c0392b;}
+.badge-yt{background:#fde8e8;color:#e74c3c;}
+.badge-link{background:#e8f4fd;color:#2980b9;}
+
+/* PREVIEW BADGE */
+.preview-link{display:inline-flex;align-items:center;gap:.4rem;color:var(--info);font-size:.82rem;text-decoration:none;margin-top:.5rem;}
+.preview-link:hover{text-decoration:underline;}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.2rem;text-align:center;}
+.stat-box .num{font-size:2rem;font-weight:700;color:var(--accent);font-family:"Amiri",serif;}
+.stat-box .lbl{font-size:.8rem;color:var(--text-muted);margin-top:.2rem;}
+
+@media(max-width:600px){
+  .form-row{grid-template-columns:1fr;}
+  .admin-body{padding:1rem;}
+  .tabs{gap:.3rem;}
+  .tab{padding:.5rem .9rem;font-size:.82rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="logo">✝ ني انجيلوس</div>
+    <p>لوحة تحكم الأدمن</p>
+    <input type="password" id="pwd-input" placeholder="كلمة المرور" onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()">دخول</button>
+    <div class="login-error" id="login-error">كلمة المرور غلط!</div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="admin-screen">
+  <nav class="admin-nav">
+    <div class="admin-nav-inner">
+      <div class="admin-logo">✝ ني انجيلوس <span>لوحة التحكم</span></div>
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <a href="index.html" target="_blank" class="preview-link" style="color:#c8b48a;">🔗 عرض الموقع</a>
+        <button class="btn-logout" onclick="doLogout()">خروج</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="admin-body">
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('contact')">📞 التواصل</button>
+      <button class="tab" onclick="switchTab('curriculum')">📚 المناهج</button>
+      <button class="tab" onclick="switchTab('pages')">📄 محتوى الصفحات</button>
+    </div>
+
+    <!-- ══ TAB: CONTACT ══ -->
+    <div id="tab-contact" class="tab-content active">
+      <div class="admin-card">
+        <h3>📞 روابط وبيانات التواصل</h3>
+        <div class="form-row">
+          <div class="field">
+            <label>رابط فيسبوك</label>
+            <input type="url" id="fb-url" placeholder="https://facebook.com/...">
+          </div>
+          <div class="field">
+            <label>رابط يوتيوب</label>
+            <input type="url" id="yt-url" placeholder="https://youtube.com/...">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>رقم التليفون</label>
+            <input type="tel" id="phone-num" placeholder="+201200000000">
+          </div>
+          <div class="field">
+            <label>رابط الخريطة (Google Maps)</label>
+            <input type="url" id="map-url" placeholder="https://maps.google.com/...">
+          </div>
+        </div>
+        <div class="form-row single">
+          <div class="field">
+            <label>أوقات التواصل</label>
+            <input type="text" id="contact-hours" placeholder="من السبت إلى الخميس، 9 ص — 9 م">
+          </div>
+        </div>
+        <button class="btn btn-save" onclick="saveContact()">💾 حفظ التغييرات</button>
+      </div>
+    </div>
+
+    <!-- ══ TAB: CURRICULUM ══ -->
+    <div id="tab-curriculum" class="tab-content">
+      <div class="admin-card">
+        <h3>📚 تعديل المناهج والمستويات</h3>
+        <div id="levels-editor"></div>
+        <button class="btn btn-save" onclick="saveCurriculum()" style="margin-top:.5rem;">💾 حفظ المناهج</button>
+      </div>
+    </div>
+
+    <!-- ══ TAB: PAGES ══ -->
+    <div id="tab-pages" class="tab-content">
+      <div class="admin-card">
+        <h3>✝ عن الكنيسة</h3>
+        <div class="form-row single">
+          <div class="field">
+            <label>نبذة عن الكنيسة</label>
+            <textarea id="about-text" rows="4" placeholder="اكتب نبذة عن الكنيسة..."></textarea>
+          </div>
+        </div>
+        <div class="form-row single">
+          <div class="field">
+            <label>رسالتنا</label>
+            <textarea id="mission-text" rows="3" placeholder="رسالة الكنيسة..."></textarea>
+          </div>
+        </div>
+        <button class="btn btn-save" onclick="savePages()">💾 حفظ</button>
+      </div>
+
+      <div class="admin-card">
+        <h3>📅 نظام الدراسة</h3>
+        <div class="form-row single">
+          <div class="field">
+            <label>بداية العام الدراسي</label>
+            <input type="text" id="study-start" placeholder="مثال: منتصف سبتمبر">
+          </div>
+        </div>
+        <div class="form-row single">
+          <div class="field">
+            <label>ملاحظة الاختبارات</label>
+            <textarea id="study-note" rows="2" placeholder="ملحوظة عن أوقات الاختبارات..."></textarea>
+          </div>
+        </div>
+        <button class="btn btn-save" onclick="savePages()">💾 حفظ</button>
+      </div>
+    </div>
+
+  </div><!-- /admin-body -->
+</div><!-- /admin-screen -->
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+// ── FIREBASE CONFIG ───────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyCcO7EpKhHIFme6MlPY2PwV9FxnEEnhzPg",
+  authDomain: "ni-angelos.firebaseapp.com",
+  projectId: "ni-angelos",
+  storageBucket: "ni-angelos.firebasestorage.app",
+  messagingSenderId: "336215738941",
+  appId: "1:336215738941:web:3ea566d8b54e4b98c53854"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ── PASSWORD ─────────────────────────────────────────────
+const PASS = 'admin123';
+
+function doLogin() {
+  const v = document.getElementById('pwd-input').value;
+  if (v === PASS) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('admin-screen').style.display = 'block';
+    loadAll();
+  } else {
+    const err = document.getElementById('login-error');
+    err.style.display = 'block';
+    setTimeout(() => err.style.display = 'none', 2000);
+  }
+}
+
+function doLogout() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('admin-screen').style.display = 'none';
+  document.getElementById('pwd-input').value = '';
+}
+
+// ── TABS ─────────────────────────────────────────────────
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── DEFAULT DATA ─────────────────────────────────────────
+const DEFAULTS = {
+  contact: {
+    fb: 'https://facebook.com',
+    yt: 'https://youtube.com',
+    phone: '+201200000000',
+    map: 'https://maps.google.com',
+    hours: 'من السبت إلى الخميس'
+  },
+  curriculum: [
+    { name: 'المستوى التمهيدي', years: [
+      { name: 'السنة الأولى', subjects: ['📖 الأجبية المقدسة','🎵 الألحان','⛪ الطقس','🔤 قبطي','💿 سي دي'] },
+      { name: 'السنة الثانية', subjects: ['📖 الأجبية المقدسة','🎵 الألحان','⛪ الطقس','🔤 قبطي','💿 سي دي'] }
+    ]},
+    { name: 'المستوى الأول', years: [
+      { name: 'السنة الأولى', subjects: ['📖 الأجبية المقدسة','🎵 الألحان','⛪ الطقس','🔤 قبطي','💿 سي دي'] },
+      { name: 'السنة الثانية', subjects: ['📖 الأجبية المقدسة','🎵 الألحان','⛪ الطقس','🔤 قبطي','💿 سي دي'] },
+      { name: 'السنة الثالثة', subjects: ['📖 الأجبية المقدسة','🎵 الألحان','⛪ الطقس','🔤 قبطي','💿 سي دي'] }
+    ]},
+    { name: 'المستوى الثاني', years: [
+      { name: 'السنة الأولى', subjects: ['📖 الأجبية المقدسة','🎵 الألحان','⛪ الطقس','🔤 قبطي','💿 سي دي'] },
+      { name: 'السنة الثانية', subjects: ['📖 الأجبية المقدسة','🎵 الألحان','⛪ الطقس','🔤 قبطي','💿 سي دي'] },
+      { name: 'السنة الثالثة', subjects: ['📖 الأجبية المقدسة','🎵 الألحان','⛪ الطقس','🔤 قبطي','💿 سي دي'] }
+    ]}
+  ],
+  pages: {
+    about: 'كنيسة ني انجيلوس هي كنيسة قبطية أرثوذكسية تقوم على خدمة الهيكل المقدس وتعليم الشمامسة الألحان القبطية والطقوس الكنسية.',
+    mission: 'تعليم الشمامسة وخدام الهيكل الألحان الكنسية الأصيلة والطقوس القبطية المتوارثة عبر الأجيال.',
+    studyStart: 'منتصف شهر سبتمبر',
+    studyNote: 'أوقات الاختبارات لن تتعارض مع الامتحانات المدرسية — فهي تتم في أوقات إجازات الدارسين.'
+  }
+};
+
+// ── FIREBASE DATA HELPERS ────────────────────────────────
+async function getData(key) {
+  try {
+    const snap = await getDoc(doc(db, 'siteData', key));
+    return snap.exists() ? snap.data().value : DEFAULTS[key];
+  } catch(e) {
+    console.warn('Firebase read error:', e);
+    return DEFAULTS[key];
+  }
+}
+
+async function setData(key, val) {
+  try {
+    await setDoc(doc(db, 'siteData', key), { value: val });
+  } catch(e) {
+    console.error('Firebase write error:', e);
+    toast('❌ خطأ في الحفظ على السيرفر!');
+  }
+}
+
+// ── LOAD ALL ─────────────────────────────────────────────
+async function loadAll() {
+  await loadContact();
+  await loadCurriculum();
+  await loadPages();
+}
+
+// ── CONTACT ──────────────────────────────────────────────
+async function loadContact() {
+  const d = await getData('contact');
+  document.getElementById('fb-url').value = d.fb;
+  document.getElementById('yt-url').value = d.yt;
+  document.getElementById('phone-num').value = d.phone;
+  document.getElementById('map-url').value = d.map;
+  document.getElementById('contact-hours').value = d.hours;
+}
+
+async function saveContact() {
+  await setData('contact', {
+    fb: document.getElementById('fb-url').value,
+    yt: document.getElementById('yt-url').value,
+    phone: document.getElementById('phone-num').value,
+    map: document.getElementById('map-url').value,
+    hours: document.getElementById('contact-hours').value
+  });
+  toast('✅ تم حفظ بيانات التواصل!');
+}
+
+// ── CURRICULUM ────────────────────────────────────────────
+let curriculum = [];
+
+async function loadCurriculum() {
+  curriculum = await getData('curriculum');
+  renderCurriculum();
+}
+
+function renderCurriculum() {
+  const container = document.getElementById('levels-editor');
+  container.innerHTML = curriculum.map((lvl, li) => `
+    <div class="level-editor">
+      <div class="level-editor-header" onclick="toggleLvl(${li})">
+        <h4>✦ ${lvl.name}</h4>
+        <div style="display:flex;gap:.5rem;">
+          <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteLevel(${li})">🗑 حذف المستوى</button>
+        </div>
+      </div>
+      <div class="level-editor-body" id="lvl-body-${li}">
+        ${lvl.years.map((yr, yi) => `
+          <div class="year-editor">
+            <div class="year-editor-title">
+              <span>${yr.name}</span>
+              <button class="btn btn-danger btn-sm" onclick="deleteYear(${li},${yi})">🗑 حذف السنة</button>
+            </div>
+            <div class="subjects-editor" id="subjs-${li}-${yi}">
+              ${yr.subjects.map((s, si) => {
+                const topics = (yr.topics || {})[si] || [];
+                const count = topics.length;
+                return `
+                <div style="display:inline-block;margin:.25rem;">
+                  <div style="display:flex;align-items:center;gap:.3rem;">
+                    <span class="subj-tag" onclick="toggleTopics('tp-${li}-${yi}-${si}')">${s}
+                      <span style="background:rgba(0,0,0,.1);border-radius:10px;padding:0 .4rem;font-size:.7rem;">${count} 📎</span>
+                    </span>
+                    <span class="remove-subj" style="cursor:pointer;color:var(--danger);font-size:.9rem;" onclick="removeSubject(${li},${yi},${si})">✕</span>
+                  </div>
+                  <div class="topic-panel" id="tp-${li}-${yi}-${si}">
+                    <h5>📎 موضوعات ومحتوى "${s.replace(/^\S+\s*/,'')}"</h5>
+                    <div class="topic-list" id="tl-${li}-${yi}-${si}">
+                      ${topics.map((t, ti) => `
+                        <div class="topic-row">
+                          <span>${t.title}</span>
+                          <a href="${t.url}" target="_blank">${t.url}</a>
+                          <button class="btn btn-danger btn-sm" onclick="removeTopic(${li},${yi},${si},${ti})">✕</button>
+                        </div>
+                      `).join('') || '<div style="color:#aaa;font-size:.82rem;padding:.25rem 0;">لا يوجد محتوى بعد</div>'}
+                    </div>
+                    <div class="add-topic-row">
+                      <input type="text" id="tn-${li}-${yi}-${si}" placeholder="عنوان الموضوع">
+                      <input type="url" id="tu-${li}-${yi}-${si}" placeholder="https://... (PDF أو يوتيوب أو رابط)">
+                      <button class="btn btn-add btn-sm" onclick="addTopic(${li},${yi},${si})">+ إضافة</button>
+                    </div>
+                  </div>
+                </div>`;
+              }).join('')}
+            </div>
+            <div class="add-subj-row">
+              <input type="text" id="new-subj-${li}-${yi}" placeholder="مثال: 🎵 الألحان" onkeydown="if(event.key==='Enter')addSubject(${li},${yi})">
+              <button class="btn btn-add btn-sm" onclick="addSubject(${li},${yi})">+ إضافة مادة</button>
+            </div>
+          </div>
+        `).join('')}
+        <div style="margin-top:.5rem;">
+          <button class="btn btn-add btn-sm" onclick="addYear(${li})">+ إضافة سنة</button>
+        </div>
+      </div>
+    </div>
+  `).join('') + `
+    <button class="btn btn-add" onclick="addLevel()" style="margin-top:.5rem;">+ إضافة مستوى جديد</button>
+  `;
+}
+
+function toggleTopics(id) {
+  document.getElementById(id).classList.toggle('open');
+}
+
+function addTopic(li, yi, si) {
+  const title = document.getElementById(`tn-${li}-${yi}-${si}`).value.trim();
+  const url   = document.getElementById(`tu-${li}-${yi}-${si}`).value.trim();
+  if (!title || !url) { toast('⚠️ اكتب العنوان والرابط'); return; }
+  if (!curriculum[li].years[yi].topics) curriculum[li].years[yi].topics = {};
+  if (!curriculum[li].years[yi].topics[si]) curriculum[li].years[yi].topics[si] = [];
+  curriculum[li].years[yi].topics[si].push({ title, url });
+  renderCurriculum();
+  // reopen panel after re-render
+  setTimeout(() => {
+    const panel = document.getElementById(`tp-${li}-${yi}-${si}`);
+    if (panel) panel.classList.add('open');
+  }, 50);
+}
+
+function removeTopic(li, yi, si, ti) {
+  curriculum[li].years[yi].topics[si].splice(ti, 1);
+  renderCurriculum();
+  setTimeout(() => {
+    const panel = document.getElementById(`tp-${li}-${yi}-${si}`);
+    if (panel) panel.classList.add('open');
+  }, 50);
+}
+
+function toggleLvl(i) {
+  const b = document.getElementById('lvl-body-' + i);
+  b.classList.toggle('open');
+}
+
+function deleteLevel(li) {
+  if (!confirm('هتحذف المستوى ده؟')) return;
+  curriculum.splice(li, 1);
+  renderCurriculum();
+}
+
+function deleteYear(li, yi) {
+  if (!confirm('هتحذف السنة دي؟')) return;
+  curriculum[li].years.splice(yi, 1);
+  renderCurriculum();
+}
+
+function removeSubject(li, yi, si) {
+  curriculum[li].years[yi].subjects.splice(si, 1);
+  renderCurriculum();
+}
+
+function addSubject(li, yi) {
+  const inp = document.getElementById(`new-subj-${li}-${yi}`);
+  const val = inp.value.trim();
+  if (!val) return;
+  curriculum[li].years[yi].subjects.push(val);
+  renderCurriculum();
+}
+
+function addYear(li) {
+  const name = prompt('اسم السنة الجديدة (مثال: السنة الرابعة)');
+  if (!name) return;
+  curriculum[li].years.push({ name, subjects: [] });
+  renderCurriculum();
+}
+
+function addLevel() {
+  const name = prompt('اسم المستوى الجديد (مثال: المستوى الثالث)');
+  if (!name) return;
+  curriculum.push({ name, years: [] });
+  renderCurriculum();
+}
+
+async function saveCurriculum() {
+  await setData('curriculum', curriculum);
+  toast('✅ تم حفظ المناهج!');
+}
+
+// ── PAGES ─────────────────────────────────────────────────
+async function loadPages() {
+  const d = await getData('pages');
+  document.getElementById('about-text').value = d.about;
+  document.getElementById('mission-text').value = d.mission;
+  document.getElementById('study-start').value = d.studyStart;
+  document.getElementById('study-note').value = d.studyNote;
+}
+
+async function savePages() {
+  await setData('pages', {
+    about: document.getElementById('about-text').value,
+    mission: document.getElementById('mission-text').value,
+    studyStart: document.getElementById('study-start').value,
+    studyNote: document.getElementById('study-note').value
+  });
+  toast('✅ تم حفظ محتوى الصفحات!');
+}
+
+// ── EXPOSE TO WINDOW (required for onclick in HTML) ───────
+Object.assign(window, {
+  doLogin, doLogout, switchTab, toast,
+  saveContact, saveCurriculum,
+  toggleTopics, addTopic, removeTopic, toggleLvl,
+  deleteLevel, deleteYear, removeSubject, addSubject,
+  addYear, addLevel, renderCurriculum,
+  savePages
+});
+</script>
+</body>
+</html>

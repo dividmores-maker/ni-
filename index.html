@@ -143,7 +143,7 @@ footer{text-align:center;padding:1.5rem;background:var(--deep);color:#6a5530;fon
 <!-- NAV -->
 <nav>
   <div class="nav-inner">
-    <a class="nav-logo" onclick="showPage('home')">✝ ني انجيلوس</a>
+    <a class="nav-logo" onclick="showPage('home')" style="display:flex;align-items:center;gap:.6rem;"><img src="image2.jpg" alt="لوجو المدرسة" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);"> ني انجيلوس</a>
     <ul class="nav-links">
       <li><a onclick="showPage('home')" id="nav-home">الصفحة الرئيسية</a></li>
       <li><a onclick="showPage('about')" id="nav-about">عن كنيستنا</a></li>
@@ -168,6 +168,9 @@ footer{text-align:center;padding:1.5rem;background:var(--deep);color:#6a5530;fon
       <span onclick="goToSlide(2)"></span>
       <span onclick="goToSlide(3)"></span>
       <span onclick="goToSlide(4)"></span>
+    </div>
+    <div style="margin-bottom:1rem;margin-top:-2rem;">
+      <img src="image2.jpg" alt="شعار مدرسة ني انجيلوس" style="width:160px;height:160px;border-radius:50%;object-fit:cover;border:4px solid var(--gold);box-shadow:0 0 30px rgba(201,168,76,.5);">
     </div>
     <div class="hero-ornament">☩</div>
     <h1>مدرسة ني انجيلوس للشمامسة</h1>
@@ -375,58 +378,9 @@ const DEFAULTS = {
   }
 };
 
-function getData(key) {
-  try { return JSON.parse(localStorage.getItem('ni_' + key)) || DEFAULTS[key]; }
-  catch { return DEFAULTS[key]; }
-}
-
-function applyAdminData() {
-  // Contact
-  const c = getData('contact');
-  document.querySelectorAll('.fb-link').forEach(el => { el.href = c.fb; });
-  document.querySelectorAll('.yt-link').forEach(el => { el.href = c.yt; });
-  document.querySelectorAll('.phone-link').forEach(el => { el.href = 'tel:' + c.phone; el.querySelector('.contact-label') && (el.querySelector('.contact-label').textContent = c.phone); });
-  document.querySelectorAll('.map-link').forEach(el => { el.href = c.map; });
-  document.querySelectorAll('.contact-hours-text').forEach(el => { el.textContent = c.hours; });
-
-  // Pages
-  const p = getData('pages');
-  const aboutEl = document.getElementById('about-text-display');
-  if (aboutEl) aboutEl.textContent = p.about;
-  const missionEl = document.getElementById('mission-text-display');
-  if (missionEl) missionEl.textContent = p.mission;
-  const studyStartEl = document.getElementById('study-start-display');
-  if (studyStartEl) studyStartEl.textContent = 'تبدأ المدرسة الدراسة في ' + p.studyStart + ' من كل عام.';
-  const studyNoteEl = document.getElementById('study-note-display');
-  if (studyNoteEl) studyNoteEl.textContent = p.studyNote;
-
-  // Curriculum
-  const cur = getData('curriculum');
-  const wrapper = document.getElementById('levels-wrapper-dynamic');
-  if (!wrapper) return;
-  wrapper.innerHTML = cur.map(lvl => `
-    <div class="level-block">
-      <div class="level-header" onclick="toggleLevel(this)">
-        ✦ ${lvl.name}<span class="toggle-icon">▼</span>
-      </div>
-      <div class="level-body">
-        ${lvl.years.map(yr => `
-          <div class="year-block">
-            <div class="year-title">${yr.name}</div>
-            <div class="subjects-row">
-              ${yr.subjects.map(s => {
-                const parts = s.split(' '); const emoji = parts[0]; const name = parts.slice(1).join(' ');
-                return `<span class="subject-btn" onclick="showSubject('${emoji}','${name}','${lvl.name} — ${yr.name}','home',${cur.indexOf(lvl)},${lvl.years.indexOf(yr)},${yr.subjects.indexOf(s)})">${s}</span>`;
-              }).join('')}
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `).join('');
-}
-
-window.addEventListener('storage', applyAdminData);
+// ── FIREBASE SETUP ────────────────────────────────────────
+// (loaded via module script below — siteData cache for showSubject)
+let _cachedCurriculum = DEFAULTS.curriculum;
 
 // ── Navigation ──────────────────────────────────────────
 let prevPage = 'home';
@@ -454,7 +408,7 @@ function showSubject(emoji, name, label, from, li, yi, si) {
   const filesBox = document.getElementById('dyn-files');
   let topicsHTML = '';
   if (li !== undefined) {
-    const cur = getData('curriculum');
+    const cur = _cachedCurriculum;
     const yr = ((cur[li] || {}).years || [])[yi] || {};
     const topics = (yr.topics || {})[si] || [];
     if (topics.length > 0) {
@@ -499,9 +453,81 @@ function goToSlide(n) {
   dots[currentSlide].classList.add('active');
 }
 setInterval(() => goToSlide((currentSlide + 1) % slides.length), 3000);
+</script>
 
-// ── Init ─────────────────────────────────────────────────
-applyAdminData();
+<!-- Firebase Real-time Sync -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCcO7EpKhHIFme6MlPY2PwV9FxnEEnhzPg",
+  authDomain: "ni-angelos.firebaseapp.com",
+  projectId: "ni-angelos",
+  storageBucket: "ni-angelos.firebasestorage.app",
+  messagingSenderId: "336215738941",
+  appId: "1:336215738941:web:3ea566d8b54e4b98c53854"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+function applyContact(c) {
+  if (!c) return;
+  document.querySelectorAll('.fb-link').forEach(el => { el.href = c.fb; });
+  document.querySelectorAll('.yt-link').forEach(el => { el.href = c.yt; });
+  document.querySelectorAll('.phone-link').forEach(el => {
+    el.href = 'tel:' + c.phone;
+    const lbl = el.querySelector('.contact-label');
+    if (lbl) lbl.textContent = c.phone;
+  });
+  document.querySelectorAll('.map-link').forEach(el => { el.href = c.map; });
+  document.querySelectorAll('.contact-hours-text').forEach(el => { el.textContent = c.hours; });
+}
+
+function applyPages(p) {
+  if (!p) return;
+  const aboutEl = document.getElementById('about-text-display');
+  if (aboutEl) aboutEl.textContent = p.about;
+  const missionEl = document.getElementById('mission-text-display');
+  if (missionEl) missionEl.textContent = p.mission;
+  const studyStartEl = document.getElementById('study-start-display');
+  if (studyStartEl) studyStartEl.textContent = 'تبدأ المدرسة الدراسة في ' + p.studyStart + ' من كل عام.';
+  const studyNoteEl = document.getElementById('study-note-display');
+  if (studyNoteEl) studyNoteEl.textContent = p.studyNote;
+}
+
+function applyCurriculum(cur) {
+  if (!cur) return;
+  window._cachedCurriculum = cur;
+  const wrapper = document.getElementById('levels-wrapper-dynamic');
+  if (!wrapper) return;
+  wrapper.innerHTML = cur.map(lvl => `
+    <div class="level-block">
+      <div class="level-header" onclick="toggleLevel(this)">
+        ✦ ${lvl.name}<span class="toggle-icon">▼</span>
+      </div>
+      <div class="level-body">
+        ${lvl.years.map(yr => `
+          <div class="year-block">
+            <div class="year-title">${yr.name}</div>
+            <div class="subjects-row">
+              ${yr.subjects.map((s, si) => {
+                const parts = s.split(' '); const emoji = parts[0]; const name = parts.slice(1).join(' ');
+                return `<span class="subject-btn" onclick="showSubject('${emoji}','${name}','${lvl.name} — ${yr.name}','home',${cur.indexOf(lvl)},${lvl.years.indexOf(yr)},${si})">${s}</span>`;
+              }).join('')}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+// Real-time listeners — update instantly when admin saves
+onSnapshot(doc(db, 'siteData', 'contact'),   snap => applyContact(snap.exists()   ? snap.data().value : null));
+onSnapshot(doc(db, 'siteData', 'pages'),     snap => applyPages(snap.exists()     ? snap.data().value : null));
+onSnapshot(doc(db, 'siteData', 'curriculum'),snap => applyCurriculum(snap.exists()? snap.data().value : null));
 </script>
 </body>
 </html>
