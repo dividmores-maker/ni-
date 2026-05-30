@@ -111,6 +111,15 @@ body{font-family:"Cairo",sans-serif;background:var(--surface);color:var(--text);
 .preview-link{display:inline-flex;align-items:center;gap:.4rem;color:var(--info);font-size:.82rem;text-decoration:none;margin-top:.5rem;}
 .preview-link:hover{text-decoration:underline;}
 
+/* TOPIC TYPE TABS */
+.topic-type-tabs{display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap;}
+.topic-type-tab{padding:.3rem .8rem;border-radius:20px;border:1.5px solid var(--border);background:#fafafa;font-size:.8rem;font-weight:700;cursor:pointer;color:var(--text-muted);transition:all .2s;}
+.topic-type-tab.active{background:var(--deep);color:var(--gold);border-color:var(--deep);}
+.github-preview-box{margin-top:.5rem;padding:.5rem;background:#f8f8f8;border-radius:8px;border:1px solid #eee;}
+.github-preview-box audio{width:100%;border-radius:6px;}
+.topic-source-panel{display:none;}.topic-source-panel.show{display:block;}
+.gh-base-hint{font-size:.75rem;color:var(--text-muted);margin-bottom:.3rem;direction:ltr;}
+
 /* STATS */
 .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.5rem;}
 .stat-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.2rem;text-align:center;}
@@ -244,11 +253,11 @@ body{font-family:"Cairo",sans-serif;background:var(--surface);color:var(--text);
 
 <div class="toast" id="toast"></div>
 
-<!-- Firebase SDK -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+<!-- Firebase SDK (compat - works without a server) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
+<script>
 // ── FIREBASE CONFIG ───────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyCcO7EpKhHIFme6MlPY2PwV9FxnEEnhzPg",
@@ -259,8 +268,8 @@ const firebaseConfig = {
   appId: "1:336215738941:web:3ea566d8b54e4b98c53854"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 // ── PASSWORD ─────────────────────────────────────────────
 const PASS = 'admin123';
@@ -336,8 +345,8 @@ const DEFAULTS = {
 // ── FIREBASE DATA HELPERS ────────────────────────────────
 async function getData(key) {
   try {
-    const snap = await getDoc(doc(db, 'siteData', key));
-    return snap.exists() ? snap.data().value : DEFAULTS[key];
+    const snap = await db.collection('siteData').doc(key).get();
+    return snap.exists ? snap.data().value : DEFAULTS[key];
   } catch(e) {
     console.warn('Firebase read error:', e);
     return DEFAULTS[key];
@@ -346,7 +355,7 @@ async function getData(key) {
 
 async function setData(key, val) {
   try {
-    await setDoc(doc(db, 'siteData', key), { value: val });
+    await db.collection('siteData').doc(key).set({ value: val });
   } catch(e) {
     console.error('Firebase write error:', e);
     toast('❌ خطأ في الحفظ على السيرفر!');
@@ -429,10 +438,27 @@ function renderCurriculum() {
                         </div>
                       `).join('') || '<div style="color:#aaa;font-size:.82rem;padding:.25rem 0;">لا يوجد محتوى بعد</div>'}
                     </div>
-                    <div class="add-topic-row">
-                      <input type="text" id="tn-${li}-${yi}-${si}" placeholder="عنوان الموضوع">
-                      <input type="url" id="tu-${li}-${yi}-${si}" placeholder="https://... (PDF أو يوتيوب أو رابط)">
-                      <button class="btn btn-add btn-sm" onclick="addTopic(${li},${yi},${si})">+ إضافة</button>
+                    <div style="margin-top:.75rem;border-top:1px solid #f0e8d8;padding-top:.75rem;">
+                      <input type="text" id="tn-${li}-${yi}-${si}" placeholder="عنوان الموضوع" style="width:100%;padding:.4rem .7rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Cairo',sans-serif;font-size:.85rem;outline:none;margin-bottom:.5rem;">
+                      <div class="topic-type-tabs">
+                        <span class="topic-type-tab active" onclick="switchTopicTab('${li}-${yi}-${si}','yt',this)">▶️ يوتيوب</span>
+                        <span class="topic-type-tab" onclick="switchTopicTab('${li}-${yi}-${si}','url',this)">🔗 رابط عادي</span>
+                        <span class="topic-type-tab" onclick="switchTopicTab('${li}-${yi}-${si}','gh',this)">📁 GitHub (PDF/MP3)</span>
+                      </div>
+                      <div class="topic-source-panel show" id="tab-yt-${li}-${yi}-${si}">
+                        <input type="url" id="tu-yt-${li}-${yi}-${si}" placeholder="https://youtube.com/..." style="width:100%;padding:.4rem .7rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Cairo',sans-serif;font-size:.82rem;outline:none;">
+                      </div>
+                      <div class="topic-source-panel" id="tab-url-${li}-${yi}-${si}">
+                        <input type="url" id="tu-url-${li}-${yi}-${si}" placeholder="https://..." style="width:100%;padding:.4rem .7rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Cairo',sans-serif;font-size:.82rem;outline:none;">
+                      </div>
+                      <div class="topic-source-panel" id="tab-gh-${li}-${yi}-${si}">
+                        <div class="gh-base-hint">📁 files/ ← اكتب اسم الملف فقط</div>
+                        <input type="text" id="tu-gh-${li}-${yi}-${si}" placeholder="مثال: درس_الالحان.mp3 أو شرح.pdf"
+                          style="width:100%;padding:.4rem .7rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Cairo',sans-serif;font-size:.82rem;outline:none;"
+                          oninput="previewGithubFile('${li}-${yi}-${si}', this.value)">
+                        <div class="github-preview-box" id="gh-preview-${li}-${yi}-${si}" style="display:none;"></div>
+                      </div>
+                      <button class="btn btn-add btn-sm" onclick="addTopic(${li},${yi},${si})" style="margin-top:.5rem;width:100%;">+ إضافة</button>
                     </div>
                   </div>
                 </div>`;
@@ -458,17 +484,66 @@ function toggleTopics(id) {
   document.getElementById(id).classList.toggle('open');
 }
 
+const GITHUB_BASE = 'https://raw.githubusercontent.com/dividmores-maker/ni-/main/files/';
+
+function switchTopicTab(key, type, el) {
+  // deactivate all tabs and panels for this key
+  const tabs = el.parentElement.querySelectorAll('.topic-type-tab');
+  tabs.forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['yt','url','gh'].forEach(t => {
+    const p = document.getElementById(`tab-${t}-${key}`);
+    if (p) p.classList.remove('show');
+  });
+  const active = document.getElementById(`tab-${type}-${key}`);
+  if (active) active.classList.add('show');
+}
+
+function previewGithubFile(key, filename) {
+  const box = document.getElementById(`gh-preview-${key}`);
+  if (!box) return;
+  if (!filename) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  const url = GITHUB_BASE + encodeURIComponent(filename);
+  const ext = filename.split('.').pop().toLowerCase();
+  box.style.display = 'block';
+  if (['mp3','wav','ogg','m4a'].includes(ext)) {
+    box.innerHTML = `<audio controls src="${url}" style="width:100%;border-radius:6px;"
+      onerror="this.outerHTML='<div style=\'color:#c0392b;font-size:.82rem;\'>❌ الملف مش موجود على GitHub</div>'"></audio>`;
+  } else if (ext === 'pdf') {
+    box.innerHTML = `<a href="${url}" target="_blank" style="color:#2980b9;font-size:.82rem;font-weight:700;">📄 معاينة PDF ← ${filename}</a>`;
+  } else {
+    box.innerHTML = `<div style="color:#888;font-size:.78rem;">🔗 ${url}</div>`;
+  }
+}
+
+function getActiveTopicUrl(key) {
+  // find which tab is active
+  const tabs = document.querySelectorAll(`#tab-yt-${key}, #tab-url-${key}, #tab-gh-${key}`);
+  for (const panel of tabs) {
+    if (!panel.classList.contains('show')) continue;
+    const type = panel.id.replace(`tab-`,'').replace(`-${key}`,'');
+    if (type === 'gh') {
+      const filename = document.getElementById(`tu-gh-${key}`)?.value.trim();
+      return filename ? GITHUB_BASE + encodeURIComponent(filename) : '';
+    } else {
+      return document.getElementById(`tu-${type}-${key}`)?.value.trim() || '';
+    }
+  }
+  return '';
+}
+
 function addTopic(li, yi, si) {
-  const title = document.getElementById(`tn-${li}-${yi}-${si}`).value.trim();
-  const url   = document.getElementById(`tu-${li}-${yi}-${si}`).value.trim();
-  if (!title || !url) { toast('⚠️ اكتب العنوان والرابط'); return; }
+  const key = `${li}-${yi}-${si}`;
+  const title = document.getElementById(`tn-${key}`).value.trim();
+  const url = getActiveTopicUrl(key);
+  if (!title) { toast('⚠️ اكتب عنوان الموضوع'); return; }
+  if (!url)   { toast('⚠️ اكتب الرابط أو اسم الملف'); return; }
   if (!curriculum[li].years[yi].topics) curriculum[li].years[yi].topics = {};
   if (!curriculum[li].years[yi].topics[si]) curriculum[li].years[yi].topics[si] = [];
   curriculum[li].years[yi].topics[si].push({ title, url });
   renderCurriculum();
-  // reopen panel after re-render
   setTimeout(() => {
-    const panel = document.getElementById(`tp-${li}-${yi}-${si}`);
+    const panel = document.getElementById(`tp-${key}`);
     if (panel) panel.classList.add('open');
   }, 50);
 }
@@ -557,7 +632,8 @@ Object.assign(window, {
   toggleTopics, addTopic, removeTopic, toggleLvl,
   deleteLevel, deleteYear, removeSubject, addSubject,
   addYear, addLevel, renderCurriculum,
-  savePages
+  savePages,
+  switchTopicTab, previewGithubFile
 });
 </script>
 </body>

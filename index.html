@@ -413,11 +413,35 @@ function showSubject(emoji, name, label, from, li, yi, si) {
     const topics = (yr.topics || {})[si] || [];
     if (topics.length > 0) {
       topicsHTML = topics.map(t => {
-        const isYT = t.url.includes('youtube') || t.url.includes('youtu.be');
-        const isPDF = t.url.toLowerCase().includes('.pdf');
-        const icon = isYT ? '▶️' : isPDF ? '📄' : '🔗';
-        const badge = isYT ? 'يوتيوب' : isPDF ? 'PDF' : 'رابط';
-        return '<a href="'+t.url+'" target="_blank" class="file-item"><div class="file-icon">'+icon+'</div><div><div style="font-weight:700">'+t.title+'</div><div style="font-size:.75rem;color:var(--text-muted);margin-top:.1rem;">'+badge+'</div></div></a>';
+        const url = t.url;
+        const isYT  = url.includes('youtube') || url.includes('youtu.be');
+        const isMP3 = /\.(mp3|wav|ogg|m4a)$/i.test(url);
+        const isPDF = /\.pdf$/i.test(url);
+        if (isMP3) {
+          // inline audio player
+          return '<div class="file-item" style="flex-direction:column;align-items:flex-start;gap:.5rem;">'
+            + '<div style="display:flex;align-items:center;gap:.75rem;">'
+            + '<div class="file-icon">🎵</div>'
+            + '<div><div style="font-weight:700">'+t.title+'</div>'
+            + '<div style="font-size:.75rem;color:var(--text-muted);">MP3</div></div></div>'
+            + '<audio controls src="'+url+'" style="width:100%;border-radius:6px;" preload="none"></audio>'
+            + '</div>';
+        } else if (isPDF) {
+          return '<a href="'+url+'" target="_blank" class="file-item">'
+            + '<div class="file-icon">📄</div>'
+            + '<div><div style="font-weight:700">'+t.title+'</div>'
+            + '<div style="font-size:.75rem;color:var(--text-muted);">PDF — اضغط للفتح</div></div></a>';
+        } else if (isYT) {
+          return '<a href="'+url+'" target="_blank" class="file-item">'
+            + '<div class="file-icon">▶️</div>'
+            + '<div><div style="font-weight:700">'+t.title+'</div>'
+            + '<div style="font-size:.75rem;color:var(--text-muted);">يوتيوب</div></div></a>';
+        } else {
+          return '<a href="'+url+'" target="_blank" class="file-item">'
+            + '<div class="file-icon">🔗</div>'
+            + '<div><div style="font-weight:700">'+t.title+'</div>'
+            + '<div style="font-size:.75rem;color:var(--text-muted);">رابط خارجي</div></div></a>';
+        }
       }).join('');
     }
   }
