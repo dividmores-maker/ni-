@@ -274,6 +274,9 @@ const db = firebase.firestore();
 // ── PASSWORD ─────────────────────────────────────────────
 const PASS = 'admin123';
 
+// ── LOADING GUARD — يمنع الحفظ قبل ما البيانات تتلود ────
+let dataLoaded = { contact: false, curriculum: false, pages: false };
+
 function doLogin() {
   const v = document.getElementById('pwd-input').value;
   if (v === PASS) {
@@ -380,7 +383,8 @@ async function loadContact() {
   dataLoaded.contact = true;
 }
 
-async function saveContact() { if (!dataLoaded.contact) { toast("⏳ البيانات لسه بتتحمل، استنى ثانية"); return; }
+async function saveContact() {
+  if (!dataLoaded.contact) { toast('⏳ البيانات لسه بتتحمل، استنى ثانية وحاول تاني'); return; }
   await setData('contact', {
     fb: document.getElementById('fb-url').value,
     yt: document.getElementById('yt-url').value,
@@ -603,7 +607,8 @@ function addLevel() {
   renderCurriculum();
 }
 
-async function saveCurriculum() { if (!dataLoaded.curriculum) { toast("⏳ البيانات لسه بتتحمل، استنى ثانية"); return; }
+async function saveCurriculum() {
+  if (!dataLoaded.curriculum) { toast('⏳ البيانات لسه بتتحمل، استنى ثانية وحاول تاني'); return; }
   await setData('curriculum', curriculum);
   toast('✅ تم حفظ المناهج!');
 }
@@ -618,7 +623,8 @@ async function loadPages() {
   dataLoaded.pages = true;
 }
 
-async function savePages() { if (!dataLoaded.pages) { toast("⏳ البيانات لسه بتتحمل، استنى ثانية"); return; }
+async function savePages() {
+  if (!dataLoaded.pages) { toast('⏳ البيانات لسه بتتحمل، استنى ثانية وحاول تاني'); return; }
   await setData('pages', {
     about: document.getElementById('about-text').value,
     mission: document.getElementById('mission-text').value,
