@@ -381,8 +381,12 @@ const DEFAULTS = {
 };
 
 // ── FIREBASE SETUP ────────────────────────────────────────
-// (loaded via module script below — siteData cache for showSubject)
+// siteData cache for showSubject — يتحدث تلقائياً من Firebase
 let _cachedCurriculum = DEFAULTS.curriculum;
+Object.defineProperty(window, '_cachedCurriculum', {
+  get() { return _cachedCurriculum; },
+  set(v) { _cachedCurriculum = v; }
+});
 
 // ── Navigation ──────────────────────────────────────────
 let prevPage = 'home';
@@ -522,6 +526,7 @@ function applyPages(p) {
 
 function applyCurriculum(cur) {
   if (!cur) return;
+  _cachedCurriculum = cur;
   window._cachedCurriculum = cur;
   const wrapper = document.getElementById('levels-wrapper-dynamic');
   if (!wrapper) return;
