@@ -270,6 +270,7 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const uploadedFileUrls = {}; // key -> رابط الملف بعد الرفع على Cloudinary
 
 // ── PASSWORD ─────────────────────────────────────────────
 const PASS = 'admin123';
@@ -449,7 +450,7 @@ function renderCurriculum() {
                       <div class="topic-type-tabs">
                         <span class="topic-type-tab active" onclick="switchTopicTab('${li}-${yi}-${si}','yt',this)">▶️ يوتيوب</span>
                         <span class="topic-type-tab" onclick="switchTopicTab('${li}-${yi}-${si}','url',this)">🔗 رابط عادي</span>
-                        <span class="topic-type-tab" onclick="switchTopicTab('${li}-${yi}-${si}','gh',this)">📁 GitHub (PDF/MP3)</span>
+                        <span class="topic-type-tab" onclick="switchTopicTab('${li}-${yi}-${si}','gh',this)">📤 رفع ملف (PDF/MP3)</span>
                       </div>
                       <div class="topic-source-panel show" id="tab-yt-${li}-${yi}-${si}">
                         <input type="url" id="tu-yt-${li}-${yi}-${si}" placeholder="https://youtube.com/..." style="width:100%;padding:.4rem .7rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Cairo',sans-serif;font-size:.82rem;outline:none;">
@@ -458,10 +459,9 @@ function renderCurriculum() {
                         <input type="url" id="tu-url-${li}-${yi}-${si}" placeholder="https://..." style="width:100%;padding:.4rem .7rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Cairo',sans-serif;font-size:.82rem;outline:none;">
                       </div>
                       <div class="topic-source-panel" id="tab-gh-${li}-${yi}-${si}">
-                        <div class="gh-base-hint">📁 files/ ← اكتب اسم الملف فقط</div>
-                        <input type="text" id="tu-gh-${li}-${yi}-${si}" placeholder="مثال: درس_الالحان.mp3 أو شرح.pdf"
-                          style="width:100%;padding:.4rem .7rem;border:1.5px solid var(--border);border-radius:6px;font-family:'Cairo',sans-serif;font-size:.82rem;outline:none;"
-                          oninput="previewGithubFile('${li}-${yi}-${si}', this.value)">
+                        <input type="file" id="tu-gh-${li}-${yi}-${si}" accept=".pdf,.mp3,.wav,.m4a,.ogg"
+                          style="width:100%;padding:.3rem 0;font-family:'Cairo',sans-serif;font-size:.82rem;"
+                          onchange="uploadTopicFile('${li}-${yi}-${si}', this)">
                         <div class="github-preview-box" id="gh-preview-${li}-${yi}-${si}" style="display:none;"></div>
                       </div>
                       <button class="btn btn-add btn-sm" onclick="addTopic(${li},${yi},${si})" style="margin-top:.5rem;width:100%;">+ إضافة</button>
@@ -490,7 +490,40 @@ function toggleTopics(id) {
   document.getElementById(id).classList.toggle('open');
 }
 
-const GITHUB_BASE = 'https://raw.githubusercontent.com/dividmores-maker/ni-/main/files/';
+// ── رفع الملفات (Cloudinary) ────────────────────────────
+const CLOUDINARY_CLOUD_NAME = 'deefnnqdm';
+const CLOUDINARY_UPLOAD_PRESET = 'NI ANGELOOOOS';
+
+async function uploadTopicFile(key, input) {
+  const file = input.files[0];
+  const box = document.getElementById(`gh-preview-${key}`);
+  if (!file) return;
+  delete uploadedFileUrls[key];
+  box.style.display = 'block';
+  box.innerHTML = `<div style="color:var(--info);font-size:.82rem;">⏳ جاري الرفع...</div>`;
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+  try {
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'فشل الرفع');
+    uploadedFileUrls[key] = data.secure_url;
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) {
+      box.innerHTML = `<div style="color:var(--success);font-size:.8rem;margin-bottom:.3rem;">✅ اترفع بنجاح</div><audio controls src="${data.secure_url}" style="width:100%;border-radius:6px;"></audio>`;
+    } else {
+      box.innerHTML = `<div style="color:var(--success);font-size:.82rem;">✅ اترفع بنجاح: 📄 ${file.name}</div>`;
+    }
+  } catch (e) {
+    box.innerHTML = `<div style="color:var(--danger);font-size:.82rem;">❌ فشل الرفع: ${e.message}</div>`;
+  }
+}
 
 function switchTopicTab(key, type, el) {
   // deactivate all tabs and panels for this key
@@ -505,23 +538,6 @@ function switchTopicTab(key, type, el) {
   if (active) active.classList.add('show');
 }
 
-function previewGithubFile(key, filename) {
-  const box = document.getElementById(`gh-preview-${key}`);
-  if (!box) return;
-  if (!filename) { box.style.display = 'none'; box.innerHTML = ''; return; }
-  const url = GITHUB_BASE + encodeURIComponent(filename);
-  const ext = filename.split('.').pop().toLowerCase();
-  box.style.display = 'block';
-  if (['mp3','wav','ogg','m4a'].includes(ext)) {
-    box.innerHTML = `<audio controls src="${url}" style="width:100%;border-radius:6px;"
-      onerror="this.outerHTML='<div style=\'color:#c0392b;font-size:.82rem;\'>❌ الملف مش موجود على GitHub</div>'"></audio>`;
-  } else if (ext === 'pdf') {
-    box.innerHTML = `<a href="${url}" target="_blank" style="color:#2980b9;font-size:.82rem;font-weight:700;">📄 معاينة PDF ← ${filename}</a>`;
-  } else {
-    box.innerHTML = `<div style="color:#888;font-size:.78rem;">🔗 ${url}</div>`;
-  }
-}
-
 function getActiveTopicUrl(key) {
   // find which tab is active
   const tabs = document.querySelectorAll(`#tab-yt-${key}, #tab-url-${key}, #tab-gh-${key}`);
@@ -529,8 +545,7 @@ function getActiveTopicUrl(key) {
     if (!panel.classList.contains('show')) continue;
     const type = panel.id.replace(`tab-`,'').replace(`-${key}`,'');
     if (type === 'gh') {
-      const filename = document.getElementById(`tu-gh-${key}`)?.value.trim();
-      return filename ? GITHUB_BASE + encodeURIComponent(filename) : '';
+      return uploadedFileUrls[key] || '';
     } else {
       return document.getElementById(`tu-${type}-${key}`)?.value.trim() || '';
     }
@@ -547,6 +562,7 @@ function addTopic(li, yi, si) {
   if (!curriculum[li].years[yi].topics) curriculum[li].years[yi].topics = {};
   if (!curriculum[li].years[yi].topics[si]) curriculum[li].years[yi].topics[si] = [];
   curriculum[li].years[yi].topics[si].push({ title, url });
+  delete uploadedFileUrls[key];
   renderCurriculum();
   setTimeout(() => {
     const panel = document.getElementById(`tp-${key}`);
@@ -642,7 +658,7 @@ Object.assign(window, {
   deleteLevel, deleteYear, removeSubject, addSubject,
   addYear, addLevel, renderCurriculum,
   savePages,
-  switchTopicTab, previewGithubFile
+  switchTopicTab, uploadTopicFile
 });
 </script>
 </body>

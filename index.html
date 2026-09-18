@@ -136,9 +136,42 @@ footer{text-align:center;padding:1.5rem;background:var(--deep);color:#6a5530;fon
   .hero{padding:3rem 1.5rem 2.5rem;}
   .container{padding:2rem 1rem;}
 }
+
+/* PDF VIEWER MODAL */
+.pdf-modal{display:none;position:fixed;inset:0;z-index:1000;background:rgba(15,10,3,.85);padding:1.5rem;}
+.pdf-modal.open{display:flex;flex-direction:column;}
+.pdf-modal-bar{display:flex;align-items:center;justify-content:space-between;gap:1rem;background:var(--deep);border-radius:10px 10px 0 0;padding:.8rem 1.2rem;flex-shrink:0;}
+.pdf-modal-title{color:var(--gold);font-family:"Amiri",serif;font-size:1.05rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pdf-modal-actions{display:flex;align-items:center;gap:.6rem;flex-shrink:0;}
+.pdf-modal-actions a,.pdf-modal-actions button{font-family:"Cairo",sans-serif;font-size:.85rem;font-weight:700;border-radius:6px;padding:.5rem .9rem;cursor:pointer;text-decoration:none;border:none;transition:opacity .2s;}
+.pdf-modal-actions a.pdf-download-btn{background:var(--gold);color:var(--deep);}
+.pdf-modal-actions button.pdf-close-btn{background:rgba(255,255,255,.1);color:#e8d9b8;}
+.pdf-modal-actions a:hover,.pdf-modal-actions button:hover{opacity:.85;}
+.pdf-modal-frame-wrap{flex:1;background:#525659;border-radius:0 0 10px 10px;overflow:auto;position:relative;display:flex;justify-content:center;align-items:flex-start;padding:1.5rem 0;}
+.pdf-modal-frame-wrap iframe{width:100%;height:100%;border:none;}
+.pdf-toolbar{display:flex;align-items:center;justify-content:space-between;gap:1rem;background:#3a2a12;padding:.55rem 1.2rem;flex-shrink:0;flex-wrap:wrap;}
+.pdf-nav-group,.pdf-zoom-group{display:flex;align-items:center;gap:.5rem;}
+.pdf-toolbar button{background:rgba(255,255,255,.1);color:#e8d9b8;border:none;border-radius:6px;padding:.4rem .8rem;font-family:"Cairo",sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:background .2s;}
+.pdf-toolbar button:hover{background:var(--gold);color:var(--deep);}
+.pdf-toolbar button:disabled{opacity:.35;cursor:default;background:rgba(255,255,255,.1);color:#e8d9b8;}
+.pdf-page-indicator{color:#c8b48a;font-size:.82rem;display:flex;align-items:center;gap:.4rem;}
+.pdf-page-indicator input{width:44px;text-align:center;background:rgba(255,255,255,.08);border:1px solid rgba(201,168,76,.3);border-radius:5px;color:#fff;padding:.25rem;font-family:"Cairo",sans-serif;font-size:.82rem;}
+.pdf-zoom-group span{color:#c8b48a;font-size:.8rem;min-width:42px;text-align:center;}
+#pdf-canvas{box-shadow:0 4px 24px rgba(0,0,0,.4);background:#fff;max-width:100%;height:auto;}
+.pdf-loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#e8d9b8;font-family:"Cairo",sans-serif;font-size:.95rem;}
+@media (max-width:640px){
+  .pdf-modal{padding:0;}
+  .pdf-modal-bar{border-radius:0;flex-wrap:wrap;}
+  .pdf-modal-frame-wrap{border-radius:0;padding:.8rem 0;}
+  .pdf-modal-title{max-width:140px;}
+  .pdf-toolbar{justify-content:center;padding:.5rem .8rem;}
+  .pdf-nav-group,.pdf-zoom-group{gap:.35rem;}
+  .pdf-toolbar button{padding:.35rem .6rem;font-size:.78rem;}
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
 
@@ -352,6 +385,33 @@ footer{text-align:center;padding:1.5rem;background:var(--deep);color:#6a5530;fon
 
 <footer>© 2025 مدرسة ني انجيلوس للشمامسة — جميع الحقوق محفوظة</footer>
 
+<!-- ══════════════ PDF VIEWER MODAL ══════════════ -->
+<div class="pdf-modal" id="pdf-modal">
+  <div class="pdf-modal-bar">
+    <span class="pdf-modal-title" id="pdf-modal-title">—</span>
+    <div class="pdf-modal-actions">
+      <a href="#" id="pdf-modal-download" class="pdf-download-btn" download>⬇️ تحميل</a>
+      <button class="pdf-close-btn" onclick="closePdfViewer()">✕ إغلاق</button>
+    </div>
+  </div>
+  <div class="pdf-toolbar">
+    <div class="pdf-nav-group">
+      <button id="pdf-prev" onclick="pdfPrevPage()">◀ السابق</button>
+      <span class="pdf-page-indicator">صفحة <input type="number" id="pdf-page-input" min="1" value="1" onchange="pdfGoToPage(this.value)"> من <span id="pdf-page-count">—</span></span>
+      <button id="pdf-next" onclick="pdfNextPage()">التالي ▶</button>
+    </div>
+    <div class="pdf-zoom-group">
+      <button onclick="pdfZoomOut()">－</button>
+      <span id="pdf-zoom-level">100%</span>
+      <button onclick="pdfZoomIn()">＋</button>
+    </div>
+  </div>
+  <div class="pdf-modal-frame-wrap" id="pdf-canvas-wrap">
+    <div class="pdf-loading" id="pdf-loading">⏳ جاري تحميل الملف...</div>
+    <canvas id="pdf-canvas"></canvas>
+  </div>
+</div>
+
 <script>
 // ── Load data from Admin localStorage ───────────────────
 const DEFAULTS = {
@@ -404,6 +464,115 @@ function goBack() {
   showPage(prevPage);
 }
 
+// ── PDF VIEWER MODAL (PDF.js) ─────────────────────────────
+function escJs(str) {
+  return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, ' ');
+}
+
+function cloudinaryDownloadUrl(url) {
+  return url.includes('/upload/') ? url.replace('/upload/', '/upload/fl_attachment/') : url;
+}
+
+if (window.pdfjsLib) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+let pdfDoc = null, pdfPageNum = 1, pdfScale = 1.0, pdfRendering = false, pdfPendingPage = null;
+
+function openPdfViewer(url, title) {
+  document.getElementById('pdf-modal-title').textContent = title;
+  document.getElementById('pdf-modal-download').href = cloudinaryDownloadUrl(url);
+  document.getElementById('pdf-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('pdf-loading').style.display = 'block';
+  document.getElementById('pdf-canvas').style.display = 'none';
+  document.getElementById('pdf-page-count').textContent = '—';
+  document.getElementById('pdf-page-input').value = 1;
+  pdfDoc = null; pdfPageNum = 1; pdfScale = 1.0;
+  updatePdfZoomLabel();
+
+  pdfjsLib.getDocument(url).promise.then(doc => {
+    pdfDoc = doc;
+    document.getElementById('pdf-page-count').textContent = doc.numPages;
+    document.getElementById('pdf-canvas').style.display = 'block';
+    document.getElementById('pdf-loading').style.display = 'none';
+    renderPdfPage(1);
+  }).catch(err => {
+    document.getElementById('pdf-loading').textContent = '⚠️ تعذّر تحميل الملف — جرّب زرار التحميل بدلاً من ذلك';
+    console.error('PDF load error:', err);
+  });
+}
+
+function renderPdfPage(num) {
+  pdfRendering = true;
+  pdfDoc.getPage(num).then(page => {
+    const canvas = document.getElementById('pdf-canvas');
+    const ctx = canvas.getContext('2d');
+    const viewport = page.getViewport({ scale: pdfScale });
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    page.render({ canvasContext: ctx, viewport }).promise.then(() => {
+      pdfRendering = false;
+      if (pdfPendingPage !== null) {
+        renderPdfPage(pdfPendingPage);
+        pdfPendingPage = null;
+      }
+    });
+  });
+  pdfPageNum = num;
+  document.getElementById('pdf-page-input').value = num;
+  document.getElementById('pdf-prev').disabled = num <= 1;
+  document.getElementById('pdf-next').disabled = num >= pdfDoc.numPages;
+}
+
+function queueRenderPage(num) {
+  if (pdfRendering) { pdfPendingPage = num; } else { renderPdfPage(num); }
+}
+
+function pdfPrevPage() {
+  if (!pdfDoc || pdfPageNum <= 1) return;
+  queueRenderPage(pdfPageNum - 1);
+}
+
+function pdfNextPage() {
+  if (!pdfDoc || pdfPageNum >= pdfDoc.numPages) return;
+  queueRenderPage(pdfPageNum + 1);
+}
+
+function pdfGoToPage(val) {
+  if (!pdfDoc) return;
+  let n = parseInt(val, 10);
+  if (isNaN(n) || n < 1) n = 1;
+  if (n > pdfDoc.numPages) n = pdfDoc.numPages;
+  queueRenderPage(n);
+}
+
+function updatePdfZoomLabel() {
+  document.getElementById('pdf-zoom-level').textContent = Math.round(pdfScale * 100) + '%';
+}
+
+function pdfZoomIn() {
+  if (!pdfDoc) return;
+  pdfScale = Math.min(pdfScale + 0.2, 3.0);
+  updatePdfZoomLabel();
+  queueRenderPage(pdfPageNum);
+}
+
+function pdfZoomOut() {
+  if (!pdfDoc) return;
+  pdfScale = Math.max(pdfScale - 0.2, 0.4);
+  updatePdfZoomLabel();
+  queueRenderPage(pdfPageNum);
+}
+
+function closePdfViewer() {
+  document.getElementById('pdf-modal').classList.remove('open');
+  document.getElementById('pdf-loading').style.display = 'block';
+  document.getElementById('pdf-loading').textContent = '⏳ جاري تحميل الملف...';
+  document.body.style.overflow = '';
+  pdfDoc = null;
+}
+
 function showSubject(emoji, name, label, from, li, yi, si) {
   prevPage = from;
   document.getElementById('dyn-emoji').textContent = emoji;
@@ -433,10 +602,10 @@ function showSubject(emoji, name, label, from, li, yi, si) {
             + '<audio controls src="'+url+'" style="width:100%;border-radius:6px;" preload="none"></audio>'
             + '</div>';
         } else if (isPDF) {
-          return '<a href="'+url+'" target="_blank" class="file-item">'
+          return '<div class="file-item" onclick="openPdfViewer(\''+escJs(url)+'\',\''+escJs(t.title)+'\')">'
             + '<div class="file-icon">📄</div>'
             + '<div><div style="font-weight:700">'+t.title+'</div>'
-            + '<div style="font-size:.75rem;color:var(--text-muted);">PDF — اضغط للفتح</div></div></a>';
+            + '<div style="font-size:.75rem;color:var(--text-muted);">PDF — اضغط للقراءة والتحميل</div></div></div>';
         } else if (isYT) {
           return '<a href="'+url+'" target="_blank" class="file-item">'
             + '<div class="file-icon">▶️</div>'
