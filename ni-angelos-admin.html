@@ -120,6 +120,14 @@ body{font-family:"Cairo",sans-serif;background:var(--surface);color:var(--text);
 .topic-source-panel{display:none;}.topic-source-panel.show{display:block;}
 .gh-base-hint{font-size:.75rem;color:var(--text-muted);margin-bottom:.3rem;direction:ltr;}
 
+/* GALLERY EDITOR */
+.gal-album{background:#fafafa;border:1px solid #eee;border-radius:8px;padding:1rem;margin-bottom:.75rem;}
+.gal-thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:.5rem;margin:.75rem 0;}
+.gal-thumb{position:relative;aspect-ratio:1;border-radius:6px;overflow:hidden;border:1px solid #ddd;background:#eee;}
+.gal-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+.gal-thumb button{position:absolute;top:3px;left:3px;background:var(--danger);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:.7rem;cursor:pointer;}
+.gal-status{font-size:.82rem;color:var(--info);margin-top:.4rem;}
+
 /* STATS */
 .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.5rem;}
 .stat-box{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.2rem;text-align:center;}
@@ -166,6 +174,7 @@ body{font-family:"Cairo",sans-serif;background:var(--surface);color:var(--text);
       <button class="tab active" onclick="switchTab('contact')">📞 التواصل</button>
       <button class="tab" onclick="switchTab('curriculum')">📚 المناهج</button>
       <button class="tab" onclick="switchTab('pages')">📄 محتوى الصفحات</button>
+      <button class="tab" onclick="switchTab('gallery')">🖼️ صور المدرسة</button>
     </div>
 
     <!-- ══ TAB: CONTACT ══ -->
@@ -248,6 +257,15 @@ body{font-family:"Cairo",sans-serif;background:var(--surface);color:var(--text);
       </div>
     </div>
 
+    <!-- ══ TAB: GALLERY ══ -->
+    <div id="tab-gallery" class="tab-content">
+      <div class="admin-card">
+        <h3>🖼️ صور المدرسة</h3>
+        <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:1rem;">المستوى ← الألبوم (كارت بعنوان) ← الصور. أي تعديل بيتحفظ تلقائي.</p>
+        <div id="gallery-editor"></div>
+      </div>
+    </div>
+
   </div><!-- /admin-body -->
 </div><!-- /admin-screen -->
 
@@ -276,7 +294,7 @@ const uploadedFileUrls = {}; // key -> رابط الملف بعد الرفع ع�
 const PASS = 'admin123';
 
 // ── LOADING GUARD — يمنع الحفظ قبل ما البيانات تتلود ────
-let dataLoaded = { contact: false, curriculum: false, pages: false };
+let dataLoaded = { contact: false, curriculum: false, pages: false, gallery: false };
 
 function doLogin() {
   const v = document.getElementById('pwd-input').value;
@@ -346,6 +364,12 @@ const DEFAULTS = {
   }
 };
 
+DEFAULTS.gallery = [
+  { name: 'المستوى التمهيدي', albums: [] },
+  { name: 'المستوى الأول', albums: [] },
+  { name: 'المستوى الثاني', albums: [] }
+];
+
 // ── FIREBASE DATA HELPERS ────────────────────────────────
 async function getData(key) {
   try {
@@ -371,6 +395,7 @@ async function loadAll() {
   await loadContact();
   await loadCurriculum();
   await loadPages();
+  await loadGallery();
 }
 
 // ── CONTACT ──────────────────────────────────────────────
@@ -650,6 +675,141 @@ async function savePages() {
   toast('✅ تم حفظ محتوى الصفحات!');
 }
 
+// ── GALLERY ───────────────────────────────────────────────
+let gallery = [];
+const openGalLvls = new Set();
+
+function escH(x) {
+  return String(x == null ? '' : x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function galThumb(u) {
+  return (u && u.includes('res.cloudinary.com') && u.includes('/upload/'))
+    ? u.replace('/upload/', '/upload/w_200,h_200,c_fill,q_auto,f_auto/') : u;
+}
+
+async function loadGallery() {
+  const d = await getData('gallery');
+  gallery = Array.isArray(d) ? d : [];
+  dataLoaded.gallery = true;
+  renderGallery();
+}
+
+async function commitGallery() {
+  renderGallery();
+  if (!dataLoaded.gallery) { toast('⏳ البيانات لسه بتتحمل، استنى ثانية وحاول تاني'); return; }
+  await setData('gallery', gallery);
+  toast('✅ تم حفظ صور المدرسة!');
+}
+
+function renderGallery() {
+  const c = document.getElementById('gallery-editor');
+  if (!c) return;
+  c.innerHTML = gallery.map((lvl, li) => {
+    const albums = lvl.albums || [];
+    return `
+    <div class="level-editor">
+      <div class="level-editor-header" onclick="toggleGalLvl(${li})">
+        <h4>✦ ${escH(lvl.name)} <small style="color:#999;font-weight:400;">(${albums.length} ألبوم)</small></h4>
+        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteGalLevel(${li})">🗑 حذف المستوى</button>
+      </div>
+      <div class="level-editor-body ${openGalLvls.has(li) ? 'open' : ''}" id="glvl-body-${li}">
+        ${albums.map((al, ai) => {
+          const photos = al.photos || [];
+          return `
+          <div class="gal-album">
+            <div class="year-editor-title">
+              <span>📁 ${escH(al.title)} <small style="font-weight:400;">(${photos.length} صورة)</small></span>
+              <span style="display:flex;gap:.4rem;">
+                <button class="btn btn-save btn-sm" onclick="renameGalAlbum(${li},${ai})">✏️ الاسم</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteGalAlbum(${li},${ai})">🗑 حذف الألبوم</button>
+              </span>
+            </div>
+            <div class="gal-thumbs">
+              ${photos.map((u, pi) => `
+                <div class="gal-thumb"><img src="${escH(galThumb(u))}" loading="lazy" alt="">
+                  <button onclick="removeGalPhoto(${li},${ai},${pi})">✕</button></div>`).join('') || '<div style="color:#aaa;font-size:.82rem;grid-column:1/-1;">لا توجد صور بعد</div>'}
+            </div>
+            <input type="file" accept="image/*" multiple onchange="uploadGalleryPhotos(${li},${ai},this)" style="font-family:'Cairo',sans-serif;font-size:.82rem;">
+            <div class="gal-status" id="gal-status-${li}-${ai}"></div>
+          </div>`;
+        }).join('')}
+        <button class="btn btn-add btn-sm" onclick="addGalAlbum(${li})">+ إضافة ألبوم (كارت)</button>
+      </div>
+    </div>`;
+  }).join('') + `<button class="btn btn-add" onclick="addGalLevel()" style="margin-top:.5rem;">+ إضافة مستوى جديد</button>`;
+}
+
+function toggleGalLvl(li) {
+  if (openGalLvls.has(li)) openGalLvls.delete(li); else openGalLvls.add(li);
+  document.getElementById('glvl-body-' + li).classList.toggle('open');
+}
+
+function addGalLevel() {
+  const name = prompt('اسم المستوى (مثال: المستوى الثالث)');
+  if (!name || !name.trim()) return;
+  gallery.push({ name: name.trim(), albums: [] });
+  commitGallery();
+}
+function deleteGalLevel(li) {
+  if (!confirm('هتحذف المستوى ده بكل ألبوماته وصوره؟')) return;
+  gallery.splice(li, 1);
+  openGalLvls.clear();
+  commitGallery();
+}
+function addGalAlbum(li) {
+  const title = prompt('عنوان الكارت (مثال: حفلة التخرج، رحلة الدير)');
+  if (!title || !title.trim()) return;
+  if (!gallery[li].albums) gallery[li].albums = [];
+  gallery[li].albums.push({ title: title.trim(), photos: [] });
+  openGalLvls.add(li);
+  commitGallery();
+}
+function renameGalAlbum(li, ai) {
+  const title = prompt('العنوان الجديد', gallery[li].albums[ai].title);
+  if (!title || !title.trim()) return;
+  gallery[li].albums[ai].title = title.trim();
+  commitGallery();
+}
+function deleteGalAlbum(li, ai) {
+  if (!confirm('هتحذف الألبوم ده بكل صوره؟')) return;
+  gallery[li].albums.splice(ai, 1);
+  commitGallery();
+}
+function removeGalPhoto(li, ai, pi) {
+  if (!confirm('هتحذف الصورة دي؟')) return;
+  gallery[li].albums[ai].photos.splice(pi, 1);
+  commitGallery();
+}
+
+async function uploadGalleryPhotos(li, ai, input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  if (!dataLoaded.gallery) { toast('⏳ البيانات لسه بتتحمل، استنى ثانية وحاول تاني'); return; }
+  const st = document.getElementById(`gal-status-${li}-${ai}`);
+  const album = gallery[li].albums[ai];
+  if (!album.photos) album.photos = [];
+  let ok = 0, failed = 0;
+  for (let i = 0; i < files.length; i++) {
+    st.textContent = `⏳ جاري رفع ${i + 1} من ${files.length}...`;
+    const fd = new FormData();
+    fd.append('file', files[i]);
+    fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    try {
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error?.message || 'فشل الرفع');
+      album.photos.push(data.secure_url);
+      ok++;
+    } catch (e) {
+      console.error(e);
+      failed++;
+    }
+  }
+  openGalLvls.add(li);
+  if (ok) await commitGallery(); else renderGallery();
+  if (failed) toast(`⚠️ ${failed} صورة فشل رفعها`);
+}
+
 // ── EXPOSE TO WINDOW (required for onclick in HTML) ───────
 Object.assign(window, {
   doLogin, doLogout, switchTab, toast,
@@ -658,7 +818,9 @@ Object.assign(window, {
   deleteLevel, deleteYear, removeSubject, addSubject,
   addYear, addLevel, renderCurriculum,
   savePages,
-  switchTopicTab, uploadTopicFile
+  switchTopicTab, uploadTopicFile,
+  toggleGalLvl, addGalLevel, deleteGalLevel, addGalAlbum, renameGalAlbum,
+  deleteGalAlbum, removeGalPhoto, uploadGalleryPhotos
 });
 </script>
 </body>

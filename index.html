@@ -137,6 +137,28 @@ footer{text-align:center;padding:1.5rem;background:var(--deep);color:#6a5530;fon
   .container{padding:2rem 1rem;}
 }
 
+/* GALLERY */
+.gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.2rem;}
+.gal-card{background:white;border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;box-shadow:0 2px 12px rgba(139,99,40,.06);transition:box-shadow .2s,transform .15s,border-color .2s;}
+.gal-card:hover{box-shadow:0 6px 24px rgba(139,99,40,.2);transform:translateY(-3px);border-color:var(--gold);}
+.gal-cover{aspect-ratio:4/3;background:#fdf3e0;display:flex;align-items:center;justify-content:center;font-size:2.8rem;color:var(--gold-dark);overflow:hidden;}
+.gal-cover img{width:100%;height:100%;object-fit:cover;display:block;}
+.gal-info{padding:.8rem 1rem;text-align:center;border-top:1px solid #f0e4c8;}
+.gal-title{font-family:"Amiri",serif;font-weight:700;font-size:1.1rem;color:var(--accent);}
+.gal-meta{font-size:.78rem;color:var(--text-muted);}
+.gal-photos{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));}
+.gal-empty{text-align:center;padding:3rem 1rem;color:var(--text-muted);}
+.lightbox{display:none;position:fixed;inset:0;z-index:1100;background:rgba(10,6,2,.92);align-items:center;justify-content:center;padding:1rem;}
+.lightbox.open{display:flex;}
+.lightbox img{max-width:100%;max-height:88vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.6);}
+.lb-close,.lb-nav{position:absolute;background:rgba(255,255,255,.12);color:#fff;border:none;border-radius:50%;width:44px;height:44px;font-size:1.4rem;cursor:pointer;transition:background .2s;}
+.lb-close:hover,.lb-nav:hover{background:var(--gold);color:var(--deep);}
+.lb-close{top:1rem;left:1rem;}
+.lb-nav{top:50%;transform:translateY(-50%);}
+.lb-prev{right:1rem;}
+.lb-next{left:1rem;}
+.lb-count{position:absolute;bottom:1rem;left:50%;transform:translateX(-50%);color:#e8d9b8;font-size:.85rem;}
+
 /* PDF VIEWER MODAL */
 .pdf-modal{display:none;position:fixed;inset:0;z-index:1000;background:rgba(15,10,3,.85);padding:1.5rem;}
 .pdf-modal.open{display:flex;flex-direction:column;}
@@ -182,6 +204,7 @@ footer{text-align:center;padding:1.5rem;background:var(--deep);color:#6a5530;fon
     <ul class="nav-links">
       <li><a onclick="showPage('home')" id="nav-home">الصفحة الرئيسية</a></li>
       <li><a onclick="showPage('about')" id="nav-about">عن كنيستنا</a></li>
+      <li><a onclick="openGallery()" id="nav-gallery">صور المدرسة</a></li>
       <li><a onclick="showPage('contact')" id="nav-contact">التواصل</a></li>
     </ul>
   </div>
@@ -276,6 +299,12 @@ footer{text-align:center;padding:1.5rem;background:var(--deep);color:#6a5530;fon
       <span class="feast-item" onclick="showFeast('ألحان عيد القيامة المجيد')"><span>✦</span> ألحان عيد القيامة المجيد</span>
     </div>
 
+    <!-- صور المدرسة -->
+    <h2 class="section-title">صور المدرسة</h2>
+    <div class="links-grid">
+      <div class="link-card" onclick="openGallery()"><div class="link-icon">🖼️</div>معرض صور المدرسة</div>
+    </div>
+
     <!-- التواصل -->
     <div class="contact-section">
       <h2 class="section-title">تواصل معنا</h2>
@@ -360,6 +389,19 @@ footer{text-align:center;padding:1.5rem;background:var(--deep);color:#6a5530;fon
   </div>
 </div>
 
+<!-- ══════════════ GALLERY PAGE ══════════════ -->
+<div id="page-gallery" class="page">
+  <div class="page-header">
+    <h1 id="gal-title">صور المدرسة</h1>
+    <p id="gal-sub">اختار المستوى</p>
+    <div class="page-header-divider"></div>
+  </div>
+  <div class="container">
+    <button class="back-btn" id="gal-back" onclick="galBack()">← الصفحة الرئيسية</button>
+    <div id="gal-content"></div>
+  </div>
+</div>
+
 <!-- ══════════════ DYNAMIC PAGE (subject/exam/feast) ══════════════ -->
 <div id="page-dynamic" class="page">
   <div class="page-header">
@@ -384,6 +426,15 @@ footer{text-align:center;padding:1.5rem;background:var(--deep);color:#6a5530;fon
 </div>
 
 <footer>© 2025 مدرسة ني انجيلوس للشمامسة — جميع الحقوق محفوظة</footer>
+
+<!-- ══════════════ PHOTO LIGHTBOX ══════════════ -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lb-close" onclick="closeLightbox()">✕</button>
+  <button class="lb-nav lb-prev" onclick="event.stopPropagation();lbStep(-1)">›</button>
+  <img id="lb-img" src="" alt="" onclick="event.stopPropagation()">
+  <button class="lb-nav lb-next" onclick="event.stopPropagation();lbStep(1)">‹</button>
+  <div class="lb-count" id="lb-count"></div>
+</div>
 
 <!-- ══════════════ PDF VIEWER MODAL ══════════════ -->
 <div class="pdf-modal" id="pdf-modal">
@@ -639,6 +690,105 @@ function toggleLevel(header) {
   header.nextElementSibling.classList.toggle('open');
 }
 
+// ── GALLERY ───────────────────────────────────────────────
+let galleryData = [];
+let galView = { li: null, ai: null };
+let lbList = [], lbIdx = 0;
+
+function escH(x) {
+  return String(x == null ? '' : x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function imgUrl(u, w, crop) {
+  if (u && u.includes('res.cloudinary.com') && u.includes('/upload/')) {
+    return u.replace('/upload/', '/upload/w_' + w + (crop ? ',h_' + Math.round(w * .75) + ',c_fill' : ',c_limit') + ',q_auto,f_auto/');
+  }
+  return u;
+}
+function galCard(cover, title, meta, onclick, icon) {
+  return '<div class="gal-card" onclick="' + onclick + '">'
+    + '<div class="gal-cover">' + (cover ? '<img loading="lazy" src="' + escH(imgUrl(cover, 500, true)) + '" alt="">' : icon) + '</div>'
+    + '<div class="gal-info"><div class="gal-title">' + escH(title) + '</div><div class="gal-meta">' + meta + '</div></div></div>';
+}
+function galEmpty(msg) {
+  return '<div class="gal-empty"><div style="font-size:3rem;opacity:.5;margin-bottom:.5rem;">🖼️</div><p>' + msg + '</p></div>';
+}
+
+function openGallery() {
+  galView = { li: null, ai: null };
+  renderGallery();
+  showPage('gallery');
+}
+function galOpenLevel(li) { galView = { li: li, ai: null }; renderGallery(); window.scrollTo({top:0,behavior:'smooth'}); }
+function galOpenAlbum(ai) { galView.ai = ai; renderGallery(); window.scrollTo({top:0,behavior:'smooth'}); }
+function galBack() {
+  if (galView.ai !== null) galView.ai = null;
+  else if (galView.li !== null) galView.li = null;
+  else { showPage('home'); return; }
+  renderGallery();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderGallery() {
+  const box = document.getElementById('gal-content');
+  if (!box) return;
+  if (galView.li !== null && !galleryData[galView.li]) galView = { li: null, ai: null };
+  if (galView.ai !== null && !((galleryData[galView.li] || {}).albums || [])[galView.ai]) galView.ai = null;
+  const T = document.getElementById('gal-title'), S = document.getElementById('gal-sub'), B = document.getElementById('gal-back');
+
+  if (galView.li === null) {
+    T.textContent = 'صور المدرسة'; S.textContent = 'اختار المستوى'; B.textContent = '← الصفحة الرئيسية';
+    box.innerHTML = galleryData.length
+      ? '<div class="gal-grid">' + galleryData.map((lvl, li) => {
+          const albums = lvl.albums || [];
+          const first = albums.find(a => (a.photos || []).length);
+          return galCard(first ? first.photos[0] : '', lvl.name, albums.length + ' ألبوم', 'galOpenLevel(' + li + ')', '📁');
+        }).join('') + '</div>'
+      : galEmpty('الصور هتتضاف قريباً — تابعونا');
+  } else if (galView.ai === null) {
+    const lvl = galleryData[galView.li], albums = lvl.albums || [];
+    T.textContent = lvl.name; S.textContent = 'صور المدرسة'; B.textContent = '← المستويات';
+    box.innerHTML = albums.length
+      ? '<div class="gal-grid">' + albums.map((al, ai) =>
+          galCard((al.photos || [])[0], al.title, (al.photos || []).length + ' صورة', 'galOpenAlbum(' + ai + ')', '📷')
+        ).join('') + '</div>'
+      : galEmpty('لسه مفيش صور في المستوى ده');
+  } else {
+    const lvl = galleryData[galView.li], al = lvl.albums[galView.ai], photos = al.photos || [];
+    T.textContent = al.title; S.textContent = lvl.name; B.textContent = '← ' + lvl.name;
+    box.innerHTML = photos.length
+      ? '<div class="gal-grid gal-photos">' + photos.map((u, pi) =>
+          '<div class="gal-card" onclick="openLightbox(' + pi + ')"><div class="gal-cover"><img loading="lazy" src="' + escH(imgUrl(u, 400, true)) + '" alt=""></div></div>'
+        ).join('') + '</div>'
+      : galEmpty('لسه مفيش صور هنا');
+  }
+}
+
+function openLightbox(pi) {
+  lbList = ((galleryData[galView.li] || {}).albums || [])[galView.ai].photos || [];
+  lbIdx = pi;
+  showLightbox();
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function showLightbox() {
+  document.getElementById('lb-img').src = imgUrl(lbList[lbIdx], 1600, false);
+  document.getElementById('lb-count').textContent = (lbIdx + 1) + ' / ' + lbList.length;
+}
+function lbStep(d) {
+  lbIdx = (lbIdx + d + lbList.length) % lbList.length;
+  showLightbox();
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lightbox').classList.contains('open')) return;
+  if (e.key === 'Escape') closeLightbox();
+  else if (e.key === 'ArrowRight') lbStep(-1);
+  else if (e.key === 'ArrowLeft') lbStep(1);
+});
+
 // ── Slideshow ─────────────────────────────────────────────
 let currentSlide = 0;
 const slides = document.querySelectorAll('.hero-slide');
@@ -731,6 +881,10 @@ function applyCurriculum(cur) {
 db.collection('siteData').doc('contact').onSnapshot(snap => applyContact(snap.exists ? snap.data().value : null));
 db.collection('siteData').doc('pages').onSnapshot(snap => applyPages(snap.exists ? snap.data().value : null));
 db.collection('siteData').doc('curriculum').onSnapshot(snap => applyCurriculum(snap.exists ? snap.data().value : null));
+db.collection('siteData').doc('gallery').onSnapshot(snap => {
+  galleryData = snap.exists && Array.isArray(snap.data().value) ? snap.data().value : [];
+  renderGallery();
+});
 </script>
 </body>
 </html>
