@@ -171,6 +171,7 @@ footer{text-align:center;padding:1.5rem;background:var(--deep);color:#6a5530;fon
 .pdf-modal-actions a:hover,.pdf-modal-actions button:hover{opacity:.85;}
 .pdf-modal-frame-wrap{flex:1;background:#525659;border-radius:0 0 10px 10px;overflow:auto;position:relative;display:flex;justify-content:center;align-items:flex-start;padding:1.5rem 0;}
 .pdf-modal-frame-wrap iframe{width:100%;height:100%;border:none;}
+.pdf-modal-frame-wrap.frame-mode{padding:0;align-items:stretch;}
 .pdf-toolbar{display:flex;align-items:center;justify-content:space-between;gap:1rem;background:#3a2a12;padding:.55rem 1.2rem;flex-shrink:0;flex-wrap:wrap;}
 .pdf-nav-group,.pdf-zoom-group{display:flex;align-items:center;gap:.5rem;}
 .pdf-toolbar button{background:rgba(255,255,255,.1);color:#e8d9b8;border:none;border-radius:6px;padding:.4rem .8rem;font-family:"Cairo",sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;transition:background .2s;}
@@ -252,20 +253,7 @@ footer{text-align:center;padding:1.5rem;background:var(--deep);color:#6a5530;fon
 
     <!-- لينكات الرسامة -->
     <h2 class="section-title">لينكات هامة لمن يريد الرسامة</h2>
-    <div class="links-grid">
-      <div class="link-card" onclick="showSubject('📖','نعمة الابصالتس','لينكات الرسامة','home')">
-        <div class="link-icon">📖</div>نعمة الابصالتس
-      </div>
-      <div class="link-card" onclick="showSubject('📋','نقاط هامة عن الرسامة','لينكات الرسامة','home')">
-        <div class="link-icon">📋</div>نقاط هامة عن الرسامة
-      </div>
-      <div class="link-card" onclick="showSubject('📄','ورقة بداية العام','لينكات الرسامة','home')">
-        <div class="link-icon">📄</div>ورقة بداية العام
-      </div>
-      <div class="link-card" onclick="showSubject('🎵','لقاء الخدمة الشماسية','لينكات الرسامة','home')">
-        <div class="link-icon">🎵</div>لقاء الخدمة الشماسية
-      </div>
-    </div>
+    <div class="links-grid" id="links-grid-dynamic"></div>
 
     <!-- المناهج -->
     <h2 class="section-title">مناهج مدرسة ني انجيلوس للشمامسة</h2>
@@ -274,30 +262,10 @@ footer{text-align:center;padding:1.5rem;background:var(--deep);color:#6a5530;fon
 
     <!-- نماذج الامتحانات -->
     <h2 class="section-title" style="margin-top:3rem;">نماذج الامتحانات</h2>
-    <div class="exams-grid">
-      <div class="exam-card"><h4>المستوى الأول</h4><div class="exam-links">
-        <span class="exam-link" onclick="showExam('المستوى الأول','السنة الأولى')">السنة الأولى</span>
-        <span class="exam-link" onclick="showExam('المستوى الأول','السنة الثانية')">السنة الثانية</span>
-        <span class="exam-link" onclick="showExam('المستوى الأول','السنة الثالثة')">السنة الثالثة</span>
-      </div></div>
-      <div class="exam-card"><h4>المستوى الثاني</h4><div class="exam-links">
-        <span class="exam-link" onclick="showExam('المستوى الثاني','السنة الأولى')">السنة الأولى</span>
-        <span class="exam-link" onclick="showExam('المستوى الثاني','السنة الثانية')">السنة الثانية</span>
-        <span class="exam-link" onclick="showExam('المستوى الثاني','السنة الثالثة')">السنة الثالثة</span>
-      </div></div>
-      <div class="exam-card"><h4>المستوى الثالث</h4><div class="exam-links">
-        <span class="exam-link" onclick="showExam('المستوى الثالث','السنة الأولى')">السنة الأولى</span>
-      </div></div>
-    </div>
+    <div class="exams-grid" id="exams-grid-dynamic"></div>
 
-    <!-- كتب الأعياد -->
     <h2 class="section-title">كتب ألحان الأعياد</h2>
-    <div class="feast-list">
-      <span class="feast-item" onclick="showFeast('ألحان عيد الميلاد المجيد')"><span>✦</span> ألحان عيد الميلاد المجيد</span>
-      <span class="feast-item" onclick="showFeast('برمون وقداس عيد الغطاس')"><span>✦</span> برمون وقداس عيد الغطاس</span>
-      <span class="feast-item" onclick="showFeast('ألحان أحد الشعانين')"><span>✦</span> ألحان أحد الشعانين</span>
-      <span class="feast-item" onclick="showFeast('ألحان عيد القيامة المجيد')"><span>✦</span> ألحان عيد القيامة المجيد</span>
-    </div>
+    <div class="feast-list" id="feast-list-dynamic"></div>
 
     <!-- صور المدرسة -->
     <h2 class="section-title">صور المدرسة</h2>
@@ -445,7 +413,7 @@ footer{text-align:center;padding:1.5rem;background:var(--deep);color:#6a5530;fon
       <button class="pdf-close-btn" onclick="closePdfViewer()">✕ إغلاق</button>
     </div>
   </div>
-  <div class="pdf-toolbar">
+  <div class="pdf-toolbar" id="pdf-toolbar">
     <div class="pdf-nav-group">
       <button id="pdf-prev" onclick="pdfPrevPage()">◀ السابق</button>
       <span class="pdf-page-indicator">صفحة <input type="number" id="pdf-page-input" min="1" value="1" onchange="pdfGoToPage(this.value)"> من <span id="pdf-page-count">—</span></span>
@@ -460,6 +428,7 @@ footer{text-align:center;padding:1.5rem;background:var(--deep);color:#6a5530;fon
   <div class="pdf-modal-frame-wrap" id="pdf-canvas-wrap">
     <div class="pdf-loading" id="pdf-loading">⏳ جاري تحميل الملف...</div>
     <canvas id="pdf-canvas"></canvas>
+    <iframe id="pdf-frame" title="PDF" style="display:none;background:#fff;"></iframe>
   </div>
 </div>
 
@@ -542,16 +511,19 @@ function openPdfViewer(url, title) {
   pdfDoc = null; pdfPageNum = 1; pdfScale = 1.0;
   updatePdfZoomLabel();
 
-  pdfjsLib.getDocument(url).promise.then(doc => {
-    pdfDoc = doc;
-    document.getElementById('pdf-page-count').textContent = doc.numPages;
-    document.getElementById('pdf-canvas').style.display = 'block';
-    document.getElementById('pdf-loading').style.display = 'none';
-    renderPdfPage(1);
-  }).catch(err => {
-    document.getElementById('pdf-loading').textContent = '⚠️ تعذّر تحميل الملف — جرّب زرار التحميل بدلاً من ذلك';
-    console.error('PDF load error:', err);
-  });
+  // عرض الملف بقارئ المتصفح نفسه (بيعرض العربي صح) — وعلى الموبايل بقارئ جوجل
+  const wrap = document.getElementById('pdf-canvas-wrap');
+  const frame = document.getElementById('pdf-frame');
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+                   (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+  document.getElementById('pdf-toolbar').style.display = 'none';
+  wrap.classList.add('frame-mode');
+  frame.style.display = 'block';
+  frame.onload = () => { document.getElementById('pdf-loading').style.display = 'none'; };
+  frame.src = isMobile
+    ? 'https://docs.google.com/gview?embedded=true&url=' + encodeURIComponent(url)
+    : url + '#toolbar=1&navpanes=0';
+  setTimeout(() => { document.getElementById('pdf-loading').style.display = 'none'; }, 4000);
 }
 
 function renderPdfPage(num) {
@@ -622,9 +594,13 @@ function closePdfViewer() {
   document.getElementById('pdf-loading').textContent = '⏳ جاري تحميل الملف...';
   document.body.style.overflow = '';
   pdfDoc = null;
+  const fr = document.getElementById('pdf-frame');
+  if (fr) { fr.src = 'about:blank'; fr.style.display = 'none'; }
+  document.getElementById('pdf-canvas-wrap').classList.remove('frame-mode');
+  document.getElementById('pdf-toolbar').style.display = '';
 }
 
-function showSubject(emoji, name, label, from, li, yi, si) {
+function showSubject(emoji, name, label, from, li, yi, si, topicsOverride) {
   prevPage = from;
   document.getElementById('dyn-emoji').textContent = emoji;
   document.getElementById('dyn-title').textContent = name;
@@ -633,10 +609,15 @@ function showSubject(emoji, name, label, from, li, yi, si) {
   document.getElementById('dyn-label').textContent = label;
   const filesBox = document.getElementById('dyn-files');
   let topicsHTML = '';
-  if (li !== undefined) {
-    const cur = _cachedCurriculum;
-    const yr = ((cur[li] || {}).years || [])[yi] || {};
-    const topics = (yr.topics || {})[si] || [];
+  if (li !== undefined || topicsOverride) {
+    let topics;
+    if (topicsOverride) {
+      topics = topicsOverride;
+    } else {
+      const cur = _cachedCurriculum;
+      const yr = ((cur[li] || {}).years || [])[yi] || {};
+      topics = (yr.topics || {})[si] || [];
+    }
     if (topics.length > 0) {
       topicsHTML = topics.map(t => {
         const url = t.url;
@@ -876,6 +857,61 @@ function applyCurriculum(cur) {
     </div>
   `).join('');
 }
+
+// ── EXTRAS: لينكات الرسامة / نماذج الامتحانات / كتب ألحان الأعياد ──
+const DEFAULT_EXTRAS = {
+  links: [
+    { emoji: '📖', name: 'نعمة الابصالتس', topics: [] },
+    { emoji: '📋', name: 'نقاط هامة عن الرسامة', topics: [] },
+    { emoji: '📄', name: 'ورقة بداية العام', topics: [] },
+    { emoji: '🎵', name: 'لقاء الخدمة الشماسية', topics: [] }
+  ],
+  exams: [
+    { name: 'المستوى الأول', years: [{ name: 'السنة الأولى', topics: [] }, { name: 'السنة الثانية', topics: [] }, { name: 'السنة الثالثة', topics: [] }] },
+    { name: 'المستوى الثاني', years: [{ name: 'السنة الأولى', topics: [] }, { name: 'السنة الثانية', topics: [] }, { name: 'السنة الثالثة', topics: [] }] },
+    { name: 'المستوى الثالث', years: [{ name: 'السنة الأولى', topics: [] }] }
+  ],
+  feasts: [
+    { name: 'ألحان عيد الميلاد المجيد', topics: [] },
+    { name: 'برمون وقداس عيد الغطاس', topics: [] },
+    { name: 'ألحان أحد الشعانين', topics: [] },
+    { name: 'ألحان عيد القيامة المجيد', topics: [] }
+  ]
+};
+let _extras = DEFAULT_EXTRAS;
+
+function renderExtras() {
+  const x = _extras;
+  const L = document.getElementById('links-grid-dynamic');
+  if (L) L.innerHTML = (x.links || []).map((l, i) =>
+    '<div class="link-card" onclick="showExtra(\'links\',' + i + ')"><div class="link-icon">' + escH(l.emoji || '🔗') + '</div>' + escH(l.name) + '</div>').join('');
+  const E = document.getElementById('exams-grid-dynamic');
+  if (E) E.innerHTML = (x.exams || []).map((lvl, li) =>
+    '<div class="exam-card"><h4>' + escH(lvl.name) + '</h4><div class="exam-links">'
+    + (lvl.years || []).map((y, yi) => '<span class="exam-link" onclick="showExtra(\'exams\',' + li + ',' + yi + ')">' + escH(y.name) + '</span>').join('')
+    + '</div></div>').join('');
+  const F = document.getElementById('feast-list-dynamic');
+  if (F) F.innerHTML = (x.feasts || []).map((f, i) =>
+    '<span class="feast-item" onclick="showExtra(\'feasts\',' + i + ')"><span>✦</span> ' + escH(f.name) + '</span>').join('');
+}
+
+function showExtra(kind, a, b) {
+  let emoji, name, label, topics;
+  if (kind === 'links') {
+    const l = _extras.links[a]; emoji = l.emoji || '🔗'; name = l.name; label = 'لينكات الرسامة'; topics = l.topics;
+  } else if (kind === 'exams') {
+    const lv = _extras.exams[a], y = lv.years[b]; emoji = '📝'; name = 'نموذج امتحان ' + lv.name; label = lv.name + ' — ' + y.name; topics = y.topics;
+  } else {
+    const f = _extras.feasts[a]; emoji = '🕊️'; name = f.name; label = 'كتب ألحان الأعياد'; topics = f.topics;
+  }
+  showSubject(emoji, name, label, 'home', undefined, undefined, undefined, topics || []);
+}
+
+renderExtras();
+db.collection('siteData').doc('extras').onSnapshot(snap => {
+  const v = snap.exists ? snap.data().value : null;
+  if (v && v.links && v.exams && v.feasts) { _extras = v; renderExtras(); }
+});
 
 // Real-time listeners — update instantly when admin saves
 db.collection('siteData').doc('contact').onSnapshot(snap => applyContact(snap.exists ? snap.data().value : null));

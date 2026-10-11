@@ -175,6 +175,7 @@ body{font-family:"Cairo",sans-serif;background:var(--surface);color:var(--text);
       <button class="tab" onclick="switchTab('curriculum')">📚 المناهج</button>
       <button class="tab" onclick="switchTab('pages')">📄 محتوى الصفحات</button>
       <button class="tab" onclick="switchTab('gallery')">🖼️ صور المدرسة</button>
+      <button class="tab" onclick="switchTab('extras')">🔗 لينكات وامتحانات وألحان</button>
     </div>
 
     <!-- ══ TAB: CONTACT ══ -->
@@ -266,6 +267,11 @@ body{font-family:"Cairo",sans-serif;background:var(--surface);color:var(--text);
       </div>
     </div>
 
+    <!-- ══ TAB: EXTRAS ══ -->
+    <div id="tab-extras" class="tab-content">
+      <div id="extras-editor"></div>
+    </div>
+
   </div><!-- /admin-body -->
 </div><!-- /admin-screen -->
 
@@ -294,7 +300,7 @@ const uploadedFileUrls = {}; // key -> رابط الملف بعد الرفع ع�
 const PASS = 'admin123';
 
 // ── LOADING GUARD — يمنع الحفظ قبل ما البيانات تتلود ────
-let dataLoaded = { contact: false, curriculum: false, pages: false, gallery: false };
+let dataLoaded = { contact: false, curriculum: false, pages: false, gallery: false, extras: false };
 
 function doLogin() {
   const v = document.getElementById('pwd-input').value;
@@ -370,6 +376,26 @@ DEFAULTS.gallery = [
   { name: 'المستوى الثاني', albums: [] }
 ];
 
+DEFAULTS.extras = {
+  links: [
+    { emoji: '📖', name: 'نعمة الابصالتس', topics: [] },
+    { emoji: '📋', name: 'نقاط هامة عن الرسامة', topics: [] },
+    { emoji: '📄', name: 'ورقة بداية العام', topics: [] },
+    { emoji: '🎵', name: 'لقاء الخدمة الشماسية', topics: [] }
+  ],
+  exams: [
+    { name: 'المستوى الأول', years: [{ name: 'السنة الأولى', topics: [] }, { name: 'السنة الثانية', topics: [] }, { name: 'السنة الثالثة', topics: [] }] },
+    { name: 'المستوى الثاني', years: [{ name: 'السنة الأولى', topics: [] }, { name: 'السنة الثانية', topics: [] }, { name: 'السنة الثالثة', topics: [] }] },
+    { name: 'المستوى الثالث', years: [{ name: 'السنة الأولى', topics: [] }] }
+  ],
+  feasts: [
+    { name: 'ألحان عيد الميلاد المجيد', topics: [] },
+    { name: 'برمون وقداس عيد الغطاس', topics: [] },
+    { name: 'ألحان أحد الشعانين', topics: [] },
+    { name: 'ألحان عيد القيامة المجيد', topics: [] }
+  ]
+};
+
 // ── FIREBASE DATA HELPERS ────────────────────────────────
 async function getData(key) {
   try {
@@ -396,6 +422,7 @@ async function loadAll() {
   await loadCurriculum();
   await loadPages();
   await loadGallery();
+  await loadExtras();
 }
 
 // ── CONTACT ──────────────────────────────────────────────
@@ -810,6 +837,217 @@ async function uploadGalleryPhotos(li, ai, input) {
   if (failed) toast(`⚠️ ${failed} صورة فشل رفعها`);
 }
 
+// ── EXTRAS (لينكات الرسامة / نماذج الامتحانات / كتب ألحان الأعياد) ──
+let extras = null;
+const openEx = new Set();
+
+async function loadExtras() {
+  const d = await getData('extras');
+  extras = (d && d.links && d.exams && d.feasts) ? d : JSON.parse(JSON.stringify(DEFAULTS.extras));
+  dataLoaded.extras = true;
+  renderExtras();
+}
+
+async function commitExtras() {
+  renderExtras();
+  if (!dataLoaded.extras) { toast('⏳ البيانات لسه بتتحمل، استنى ثانية وحاول تاني'); return; }
+  await setData('extras', extras);
+  toast('✅ تم الحفظ!');
+}
+
+function exNode(p) {
+  const [t, a, b] = p.split(':');
+  if (t === 'l') return extras.links[a];
+  if (t === 'e') return extras.exams[a].years[b];
+  return extras.feasts[a];
+}
+
+function exTopicsEditor(p) {
+  const n = exNode(p);
+  const topics = n.topics || [];
+  const inp = 'width:100%;padding:.4rem .7rem;border:1.5px solid var(--border);border-radius:6px;font-family:\'Cairo\',sans-serif;font-size:.85rem;outline:none;margin-bottom:.5rem;';
+  return `
+    <div style="background:#fff;border:1.5px solid var(--gold);border-radius:10px;padding:1rem;margin-top:.5rem;">
+      <h5 style="font-size:.85rem;color:var(--accent);margin-bottom:.75rem;">📎 المحتوى (${topics.length})</h5>
+      <div style="display:flex;flex-direction:column;gap:.4rem;">
+        ${topics.map((t, ti) => `
+          <div class="topic-row">
+            <span>${escH(t.title)}</span>
+            <a href="${escH(t.url)}" target="_blank">${escH(t.url)}</a>
+            <button class="btn btn-danger btn-sm" onclick="exRemoveTopic('${p}',${ti})">✕</button>
+          </div>`).join('') || '<div style="color:#aaa;font-size:.82rem;">لا يوجد محتوى بعد</div>'}
+      </div>
+      <div style="margin-top:.75rem;border-top:1px solid #f0e8d8;padding-top:.75rem;">
+        <input type="text" id="ex-t-${p}" placeholder="العنوان" style="${inp}">
+        <input type="url" id="ex-u-${p}" placeholder="رابط (يوتيوب / درايف / أي رابط) — أو ارفع ملف تحت" style="${inp}">
+        <input type="file" id="ex-f-${p}" accept=".pdf,.mp3,.wav,.m4a,.ogg,.jpg,.jpeg,.png" onchange="exUpload('${p}',this)" style="font-family:'Cairo',sans-serif;font-size:.82rem;">
+        <div id="ex-s-${p}" style="font-size:.8rem;margin:.3rem 0;"></div>
+        <button class="btn btn-add btn-sm" onclick="exAddTopic('${p}')" style="width:100%;">+ إضافة</button>
+      </div>
+    </div>`;
+}
+
+function exBlock(key, title, headerBtns, bodyHtml) {
+  return `
+    <div class="level-editor">
+      <div class="level-editor-header" onclick="toggleEx('${key}')">
+        <h4>${title}</h4>
+        <div style="display:flex;gap:.4rem;">${headerBtns}</div>
+      </div>
+      <div class="level-editor-body ${openEx.has(key) ? 'open' : ''}" id="exb-${key}">${bodyHtml}</div>
+    </div>`;
+}
+
+function renderExtras() {
+  const c = document.getElementById('extras-editor');
+  if (!c || !extras) return;
+  const btn = (fn, label, cls) => `<button class="btn ${cls} btn-sm" onclick="event.stopPropagation();${fn}">${label}</button>`;
+
+  const links = extras.links.map((l, i) => exBlock('l' + i,
+    `${escH(l.emoji || '🔗')} ${escH(l.name)} <small style="color:#999;font-weight:400;">(${(l.topics || []).length})</small>`,
+    btn(`exRenameLink(${i})`, '✏️', 'btn-save') + btn(`exDelete('l',${i})`, '🗑', 'btn-danger'),
+    exTopicsEditor('l:' + i))).join('');
+
+  const exams = extras.exams.map((lvl, li) => exBlock('e' + li,
+    `✦ ${escH(lvl.name)}`,
+    btn(`exRename('e',${li})`, '✏️', 'btn-save') + btn(`exDelete('e',${li})`, '🗑 حذف المستوى', 'btn-danger'),
+    (lvl.years || []).map((y, yi) => `
+      <div class="year-editor">
+        <div class="year-editor-title">
+          <span>${escH(y.name)} <small style="font-weight:400;">(${(y.topics || []).length})</small></span>
+          <span style="display:flex;gap:.4rem;">
+            <button class="btn btn-save btn-sm" onclick="exRename('y',${li},${yi})">✏️</button>
+            <button class="btn btn-danger btn-sm" onclick="exDelete('y',${li},${yi})">🗑 حذف السنة</button>
+          </span>
+        </div>
+        ${exTopicsEditor('e:' + li + ':' + yi)}
+      </div>`).join('')
+    + `<button class="btn btn-add btn-sm" onclick="exAddYear(${li})">+ إضافة سنة</button>`)).join('');
+
+  const feasts = extras.feasts.map((f, i) => exBlock('f' + i,
+    `🕊️ ${escH(f.name)} <small style="color:#999;font-weight:400;">(${(f.topics || []).length})</small>`,
+    btn(`exRename('f',${i})`, '✏️', 'btn-save') + btn(`exDelete('f',${i})`, '🗑', 'btn-danger'),
+    exTopicsEditor('f:' + i))).join('');
+
+  c.innerHTML = `
+    <div class="admin-card">
+      <h3>🔗 لينكات هامة لمن يريد الرسامة</h3>
+      ${links}
+      <button class="btn btn-add" onclick="exAddLink()">+ إضافة كارت</button>
+    </div>
+    <div class="admin-card">
+      <h3>📝 نماذج الامتحانات</h3>
+      ${exams}
+      <button class="btn btn-add" onclick="exAddLevel()">+ إضافة مستوى</button>
+    </div>
+    <div class="admin-card">
+      <h3>🕊️ كتب ألحان الأعياد</h3>
+      ${feasts}
+      <button class="btn btn-add" onclick="exAddFeast()">+ إضافة عيد</button>
+    </div>`;
+}
+
+function toggleEx(key) {
+  if (openEx.has(key)) openEx.delete(key); else openEx.add(key);
+  document.getElementById('exb-' + key).classList.toggle('open');
+}
+
+async function exUpload(p, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const st = document.getElementById('ex-s-' + p);
+  st.style.color = 'var(--info)';
+  st.textContent = '⏳ جاري الرفع...';
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  try {
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error?.message || 'فشل الرفع');
+    document.getElementById('ex-u-' + p).value = data.secure_url;
+    const t = document.getElementById('ex-t-' + p);
+    if (!t.value.trim()) t.value = file.name.replace(/\.[^.]+$/, '');
+    st.style.color = 'var(--success)';
+    st.textContent = '✅ اترفع — دوس "+ إضافة"';
+  } catch (e) {
+    st.style.color = 'var(--danger)';
+    st.textContent = '❌ فشل الرفع: ' + e.message;
+  }
+}
+
+function exKey(p) { const [t, a] = p.split(':'); return t + a; }
+
+function exAddTopic(p) {
+  const title = document.getElementById('ex-t-' + p).value.trim();
+  const url = document.getElementById('ex-u-' + p).value.trim();
+  if (!title) { toast('⚠️ اكتب العنوان'); return; }
+  if (!url) { toast('⚠️ اكتب الرابط أو ارفع ملف'); return; }
+  const n = exNode(p);
+  if (!n.topics) n.topics = [];
+  n.topics.push({ title, url });
+  openEx.add(exKey(p));
+  commitExtras();
+}
+
+function exRemoveTopic(p, ti) {
+  if (!confirm('هتحذف العنصر ده؟')) return;
+  exNode(p).topics.splice(ti, 1);
+  openEx.add(exKey(p));
+  commitExtras();
+}
+
+function exAddLink() {
+  const name = prompt('اسم الكارت (مثال: نعمة الابصالتس)');
+  if (!name || !name.trim()) return;
+  const emoji = prompt('أيقونة (إيموجي)', '🔗') || '🔗';
+  extras.links.push({ emoji: emoji.trim(), name: name.trim(), topics: [] });
+  commitExtras();
+}
+function exRenameLink(i) {
+  const name = prompt('الاسم', extras.links[i].name);
+  if (!name || !name.trim()) return;
+  const emoji = prompt('الأيقونة', extras.links[i].emoji || '🔗');
+  extras.links[i].name = name.trim();
+  if (emoji && emoji.trim()) extras.links[i].emoji = emoji.trim();
+  commitExtras();
+}
+function exAddLevel() {
+  const name = prompt('اسم المستوى (مثال: المستوى الرابع)');
+  if (!name || !name.trim()) return;
+  extras.exams.push({ name: name.trim(), years: [] });
+  commitExtras();
+}
+function exAddYear(li) {
+  const name = prompt('اسم السنة (مثال: السنة الرابعة)');
+  if (!name || !name.trim()) return;
+  extras.exams[li].years.push({ name: name.trim(), topics: [] });
+  openEx.add('e' + li);
+  commitExtras();
+}
+function exAddFeast() {
+  const name = prompt('اسم العيد / الكتاب');
+  if (!name || !name.trim()) return;
+  extras.feasts.push({ name: name.trim(), topics: [] });
+  commitExtras();
+}
+function exRename(kind, a, b) {
+  const target = kind === 'e' ? extras.exams[a] : kind === 'y' ? extras.exams[a].years[b] : extras.feasts[a];
+  const name = prompt('الاسم الجديد', target.name);
+  if (!name || !name.trim()) return;
+  target.name = name.trim();
+  commitExtras();
+}
+function exDelete(kind, a, b) {
+  if (!confirm('هتحذف ده بكل محتواه؟')) return;
+  if (kind === 'l') extras.links.splice(a, 1);
+  else if (kind === 'e') extras.exams.splice(a, 1);
+  else if (kind === 'y') extras.exams[a].years.splice(b, 1);
+  else extras.feasts.splice(a, 1);
+  openEx.clear();
+  commitExtras();
+}
+
 // ── EXPOSE TO WINDOW (required for onclick in HTML) ───────
 Object.assign(window, {
   doLogin, doLogout, switchTab, toast,
@@ -820,7 +1058,9 @@ Object.assign(window, {
   savePages,
   switchTopicTab, uploadTopicFile,
   toggleGalLvl, addGalLevel, deleteGalLevel, addGalAlbum, renameGalAlbum,
-  deleteGalAlbum, removeGalPhoto, uploadGalleryPhotos
+  deleteGalAlbum, removeGalPhoto, uploadGalleryPhotos,
+  toggleEx, exUpload, exAddTopic, exRemoveTopic, exAddLink, exRenameLink,
+  exAddLevel, exAddYear, exAddFeast, exRename, exDelete
 });
 </script>
 </body>
